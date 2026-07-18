@@ -32,6 +32,10 @@ const Transaction = sequelize.define('Transaction', {
     type: DataTypes.UUID,
     allowNull: false
   },
+  businessId: {
+    type: DataTypes.UUID,
+    allowNull: true
+  },
   items: {
     type: DataTypes.JSON,
     allowNull: false,

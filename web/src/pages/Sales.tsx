@@ -14,10 +14,12 @@ import {
   Printer,
   Download,
   X,
-  Eye
+  Eye,
+  Trash2
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { api } from '../services/api';
+import toast from 'react-hot-toast';
 
 interface Sale {
   id: string;
@@ -65,6 +67,17 @@ export default function Sales() {
   const [invoiceModalOpen, setInvoiceModalOpen] = useState(false);
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
   const [printing, setPrinting] = useState(false);
+  
+  // New Sale form state
+  const [newSaleModalOpen, setNewSaleModalOpen] = useState(false);
+  const [customers, setCustomers] = useState<any[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
+  const [selectedCustomer, setSelectedCustomer] = useState('');
+  const [selectedProducts, setSelectedProducts] = useState<any[]>([]);
+  const [paymentMethod, setPaymentMethod] = useState('cash');
+  const [paymentStatus, setPaymentStatus] = useState('paid');
+  const [notes, setNotes] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (businessId) {
@@ -76,58 +89,37 @@ export default function Sales() {
     if (!businessId) return;
     try {
       setLoading(true);
-      // TODO: Replace with actual API call
-      // const response = await api.getSales(businessId);
-      // setSales(response.sales);
-      
-      // Dummy data for now
-      setSales([
-        {
-          id: '1',
-          invoiceNumber: 'INV-001',
-          customerId: 'cust-1',
-          customerName: 'Rajesh Kumar Sharma',
-          customerPhone: '+91 98765 43210',
-          customerEmail: 'rajesh@email.com',
-          customerAddress: '123 Main Street, New Delhi',
-          customerGstNumber: '07AABCS1234R1Z5',
-          items: [
-            { productId: '1', productName: 'Product A', quantity: 2, unitPrice: 500, discount: 0, tax: 90, total: 1090 }
-          ],
-          subtotal: 1000,
-          taxAmount: 90,
-          discountAmount: 0,
-          grandTotal: 1090,
-          paymentMethod: 'cash',
-          paymentStatus: 'paid',
-          status: 'completed',
-          date: '2024-01-15',
-          dueDate: '2024-01-30',
-          businessId: businessId
-        },
-        {
-          id: '2',
-          invoiceNumber: 'INV-002',
-          customerId: 'cust-2',
-          customerName: 'Priya Patel',
-          customerPhone: '+91 87654 32109',
-          items: [
-            { productId: '2', productName: 'Product B', quantity: 1, unitPrice: 750, discount: 50, tax: 126, total: 826 }
-          ],
-          subtotal: 750,
-          taxAmount: 126,
-          discountAmount: 50,
-          grandTotal: 826,
-          paymentMethod: 'upi',
-          paymentStatus: 'pending',
-          status: 'pending',
-          date: '2024-01-14',
-          dueDate: '2024-01-29',
-          businessId: businessId
-        }
-      ]);
+      const response = await api.getSales(businessId);
+      const data = response as any;
+      if (data && data.success) {
+        // Transform API data to match our interface
+        const transformedSales = (data.sales || []).map((sale: any) => ({
+          id: sale.id,
+          invoiceNumber: sale.invoiceNumber,
+          customerId: sale.customer?.id || '',
+          customerName: sale.customer?.name || 'Walk-in Customer',
+          customerPhone: sale.customer?.phone,
+          customerEmail: sale.customer?.email,
+          customerAddress: sale.customer?.address,
+          customerGstNumber: sale.customer?.gstNumber,
+          items: typeof sale.items === 'string' ? JSON.parse(sale.items) : (sale.items || []),
+          subtotal: parseFloat(sale.subtotal || 0),
+          taxAmount: parseFloat(sale.tax || 0),
+          discountAmount: parseFloat(sale.discount || 0),
+          grandTotal: parseFloat(sale.total || 0),
+          paymentMethod: sale.paymentMethod,
+          paymentStatus: sale.paymentStatus,
+          status: sale.paymentStatus === 'paid' ? 'completed' : 'pending',
+          date: new Date(sale.createdAt).toISOString().split('T')[0],
+          dueDate: sale.dueDate,
+          notes: sale.notes,
+          businessId: sale.businessId
+        }));
+        setSales(transformedSales);
+      }
     } catch (error) {
       console.error('Failed to load sales:', error);
+      toast.error('Failed to load sales');
     } finally {
       setLoading(false);
     }
@@ -184,6 +176,120 @@ export default function Sales() {
     setInvoiceModalOpen(true);
   };
 
+  const openNewSaleModal = async () => {
+    if (!businessId) return;
+    try {
+      // Load customers and products for the form
+      const [customersRes, productsRes] = await Promise.all([
+        api.getBusinessCustomers(businessId),
+        api.getBusinessProducts(businessId)
+      ]);
+      const customersData = customersRes as any;
+      const productsData = productsRes as any;
+      if (customersData && customersData.success) setCustomers(customersData.customers || []);
+      if (productsData && productsData.success) setProducts(productsData.products || []);
+      setNewSaleModalOpen(true);
+    } catch (error) {
+      console.error('Failed to load form data:', error);
+      toast.error('Failed to load form data');
+    }
+  };
+
+  const addProductToSale = (product: any) => {
+    const existing = selectedProducts.find(p => p.productId === product.id);
+    if (existing) {
+      setSelectedProducts(selectedProducts.map(p => 
+        p.productId === product.id 
+          ? { ...p, quantity: p.quantity + 1, total: (p.quantity + 1) * p.unitPrice }
+          : p
+      ));
+    } else {
+      setSelectedProducts([...selectedProducts, {
+        productId: product.id,
+        productName: product.name,
+        quantity: 1,
+        unitPrice: parseFloat(product.sellingPrice || 0),
+        discount: 0,
+        tax: parseFloat(product.taxRate || 0),
+        total: parseFloat(product.sellingPrice || 0)
+      }]);
+    }
+  };
+
+  const removeProductFromSale = (productId: string) => {
+    setSelectedProducts(selectedProducts.filter(p => p.productId !== productId));
+  };
+
+  const updateProductQuantity = (productId: string, quantity: number) => {
+    setSelectedProducts(selectedProducts.map(p => {
+      if (p.productId === productId) {
+        return {
+          ...p,
+          quantity,
+          total: quantity * p.unitPrice
+        };
+      }
+      return p;
+    }));
+  };
+
+  const calculateTotals = () => {
+    const subtotal = selectedProducts.reduce((sum, p) => sum + p.total, 0);
+    const discount = selectedProducts.reduce((sum, p) => sum + p.discount, 0);
+    const tax = selectedProducts.reduce((sum, p) => sum + (p.total * p.tax / 100), 0);
+    const grandTotal = subtotal - discount + tax;
+    return { subtotal, discount, tax, grandTotal };
+  };
+
+  const handleCreateSale = async () => {
+    if (!businessId || !selectedCustomer || selectedProducts.length === 0) {
+      toast.error('Please select a customer and at least one product');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      const { subtotal, discount, tax, grandTotal } = calculateTotals();
+      
+      const saleData = {
+        customerId: selectedCustomer,
+        items: selectedProducts,
+        subtotal,
+        discount,
+        tax,
+        total: grandTotal,
+        paymentMethod,
+        paymentStatus,
+        notes,
+        date: new Date().toISOString()
+      };
+
+      const response = await api.createSale(businessId, saleData);
+      const data = response as any;
+      if (data && data.success) {
+        toast.success('Sale created successfully!');
+        setNewSaleModalOpen(false);
+        resetNewSaleForm();
+        loadSales();
+      } else {
+        toast.error(data?.message || 'Failed to create sale');
+      }
+    } catch (error) {
+      console.error('Failed to create sale:', error);
+      toast.error('Failed to create sale');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const resetNewSaleForm = () => {
+    setSelectedCustomer('');
+    setSelectedProducts([]);
+    setPaymentMethod('cash');
+    setPaymentStatus('paid');
+    setNotes('');
+  };
+
   const handlePrint = () => {
     setPrinting(true);
     window.print();
@@ -222,12 +328,15 @@ export default function Sales() {
       {/* Header */}
       <div className="bg-white border-b border-slate-200">
         <div className="px-6 py-4">
-          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-2xl font-bold text-slate-900">Sales</h1>
               <p className="text-slate-500 text-sm mt-1">Track your sales and transactions</p>
             </div>
-            <button className="flex items-center px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg hover:from-indigo-600 hover:to-purple-700 transition-all duration-200 shadow-md">
+            <button 
+              onClick={openNewSaleModal}
+              className="flex items-center px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg hover:from-indigo-600 hover:to-purple-700 transition-all duration-200 shadow-md"
+            >
               <Plus className="h-4 w-4 mr-2" />
               New Sale
             </button>
@@ -339,6 +448,186 @@ export default function Sales() {
           </div>
         </div>
       </div>
+
+      {/* New Sale Modal */}
+      {newSaleModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
+              <h2 className="text-lg font-bold text-slate-900">New Sale</h2>
+              <button
+                onClick={() => setNewSaleModalOpen(false)}
+                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="p-6">
+              {/* Customer Selection */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-slate-700 mb-2">Customer *</label>
+                <select
+                  value={selectedCustomer}
+                  onChange={(e) => setSelectedCustomer(e.target.value)}
+                  className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  <option value="">Select Customer</option>
+                  {customers.map(customer => (
+                    <option key={customer.id} value={customer.id}>
+                      {customer.name} {customer.phone ? `(${customer.phone})` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Product Selection */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-slate-700 mb-2">Add Products</label>
+                <select
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      const product = products.find(p => p.id === e.target.value);
+                      if (product) {
+                        addProductToSale(product);
+                        e.target.value = '';
+                      }
+                    }
+                  }}
+                  className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  <option value="">Select Product to Add</option>
+                  {products.map(product => (
+                    <option key={product.id} value={product.id}>
+                      {product.name} - ₹{product.sellingPrice}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Selected Products Table */}
+              {selectedProducts.length > 0 && (
+                <div className="mb-6">
+                  <table className="w-full">
+                    <thead className="bg-slate-50 border-b border-slate-200">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Product</th>
+                        <th className="px-4 py-3 text-center text-xs font-semibold text-slate-600 uppercase">Qty</th>
+                        <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 uppercase">Price</th>
+                        <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 uppercase">Total</th>
+                        <th className="px-4 py-3 text-center text-xs font-semibold text-slate-600 uppercase">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200">
+                      {selectedProducts.map((item, index) => (
+                        <tr key={index}>
+                          <td className="px-4 py-3 text-sm text-slate-900">{item.productName}</td>
+                          <td className="px-4 py-3">
+                            <input
+                              type="number"
+                              min="1"
+                              value={item.quantity}
+                              onChange={(e) => updateProductQuantity(item.productId, parseInt(e.target.value) || 1)}
+                              className="w-20 px-2 py-1 text-sm text-center border border-slate-200 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            />
+                          </td>
+                          <td className="px-4 py-3 text-sm text-slate-600 text-right">₹{item.unitPrice.toFixed(2)}</td>
+                          <td className="px-4 py-3 text-sm font-semibold text-slate-900 text-right">₹{item.total.toFixed(2)}</td>
+                          <td className="px-4 py-3 text-center">
+                            <button
+                              onClick={() => removeProductFromSale(item.productId)}
+                              className="p-1 text-red-600 hover:bg-red-50 rounded"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* Totals */}
+              {selectedProducts.length > 0 && (
+                <div className="flex justify-end mb-6">
+                  <div className="w-64">
+                    <div className="flex justify-between py-2 border-b border-slate-200">
+                      <span className="text-sm text-slate-600">Subtotal:</span>
+                      <span className="text-sm font-medium text-slate-900">₹{calculateTotals().subtotal.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between py-2 border-b border-slate-200">
+                      <span className="text-sm text-slate-600">Tax:</span>
+                      <span className="text-sm font-medium text-slate-900">₹{calculateTotals().tax.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between py-3 bg-indigo-50 rounded-lg px-3 mt-2">
+                      <span className="text-base font-bold text-slate-900">Grand Total:</span>
+                      <span className="text-base font-bold text-indigo-600">₹{calculateTotals().grandTotal.toFixed(2)}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Payment Details */}
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Payment Method</label>
+                  <select
+                    value={paymentMethod}
+                    onChange={(e) => setPaymentMethod(e.target.value)}
+                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="cash">Cash</option>
+                    <option value="card">Card</option>
+                    <option value="upi">UPI</option>
+                    <option value="credit">Credit</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Payment Status</label>
+                  <select
+                    value={paymentStatus}
+                    onChange={(e) => setPaymentStatus(e.target.value)}
+                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="paid">Paid</option>
+                    <option value="pending">Pending</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Notes */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-slate-700 mb-2">Notes</label>
+                <textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  rows={3}
+                  className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  placeholder="Add any notes..."
+                />
+              </div>
+
+              {/* Actions */}
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setNewSaleModalOpen(false)}
+                  className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCreateSale}
+                  disabled={submitting || !selectedCustomer || selectedProducts.length === 0}
+                  className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg hover:from-indigo-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {submitting ? 'Creating...' : 'Create Sale'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Invoice Modal */}
       {invoiceModalOpen && selectedSale && (

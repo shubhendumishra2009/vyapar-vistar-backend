@@ -236,17 +236,17 @@ class APIService {
     return this.request<Blob>('GET', `/customers/business/import-template/${format}`, {}, { responseType: 'blob' });
   }
 
-  // Sales/Transaction endpoints
-  async getSales(shopId: string, params?: any) {
-    return this.request('GET', `/sales/shop/${shopId}`, params);
+  // Sales/Transaction endpoints (business-scoped)
+  async getSales(businessId: string, params?: any) {
+    return this.request('GET', `/sales/business/${businessId}`, params);
   }
 
   async getSale(transactionId: string) {
     return this.request('GET', `/sales/${transactionId}`);
   }
 
-  async createSale(transactionData: any) {
-    return this.request('POST', '/sales/', transactionData);
+  async createSale(businessId: string, saleData: any) {
+    return this.request('POST', `/sales/business/${businessId}`, saleData);
   }
 
   async updateSale(transactionId: string, transactionData: any) {
@@ -257,8 +257,8 @@ class APIService {
     return this.request('DELETE', `/sales/${transactionId}`);
   }
 
-  async getSalesSummary(shopId: string) {
-    return this.request('GET', `/sales/shop/${shopId}/summary`);
+  async getSalesSummary(businessId: string) {
+    return this.request('GET', `/sales/business/${businessId}/summary`);
   }
 
   // Inventory endpoints

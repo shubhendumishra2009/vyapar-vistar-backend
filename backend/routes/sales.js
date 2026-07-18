@@ -1,24 +1,23 @@
 const express = require('express');
 const router = express.Router();
-const { Transaction } = require('../models');
+const { Transaction, Business, Product, Customer, sequelize } = require('../models');
 const { Op } = require('sequelize');
 
-// Get all transactions for a shop
-router.get('/shop/:shopId', async (req, res) => {
+// Get all sales for a business
+router.get('/business/:businessId', async (req, res) => {
   try {
-    const { shopId } = req.params;
+    const { businessId } = req.params;
     const { page = 1, limit = 50, type, paymentStatus, startDate, endDate } = req.query;
     
-    // Validate shopId
-    if (!shopId || shopId === 'undefined') {
-      return res.status(400).json({ error: 'Invalid shop ID' });
+    if (!businessId || businessId === 'undefined') {
+      return res.status(400).json({ error: 'Invalid business ID' });
     }
     
-    const whereClause = { shopId, isDeleted: false };
-    
-    if (type) {
-      whereClause.type = type;
-    }
+    const whereClause = { 
+      businessId, 
+      type: 'sale',
+      isDeleted: false 
+    };
     
     if (paymentStatus) {
       whereClause.paymentStatus = paymentStatus;
@@ -38,117 +37,134 @@ router.get('/shop/:shopId', async (req, res) => {
     const transactions = await Transaction.findAndCountAll({
       where: whereClause,
       include: [
-        { model: require('../models').Customer, as: 'customer', attributes: ['name', 'phone', 'email'] },
-        { model: require('../models').User, as: 'user', attributes: ['name'] }
+        { 
+          model: Customer, 
+          as: 'customer', 
+          attributes: ['name', 'phone', 'email'] 
+        }
       ],
       order: [['createdAt', 'DESC']],
       limit: parseInt(limit),
       offset: parseInt(offset)
     });
 
-    const total = transactions.count;
-
     res.json({
       success: true,
-      transactions: transactions.rows,
+      sales: transactions.rows,
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
-        total,
-        pages: Math.ceil(total / limit)
+        total: transactions.count,
+        pages: Math.ceil(transactions.count / limit)
       }
     });
   } catch (error) {
-    console.error('Get transactions error:', error);
-    res.status(500).json({ error: 'Failed to get transactions', message: error.message });
+    console.error('Get sales error:', error);
+    res.status(500).json({ error: 'Failed to get sales', message: error.message });
   }
 });
 
-// Get single transaction
+// Get single sale
 router.get('/:id', async (req, res) => {
   try {
-    const transaction = await Transaction.findByPk(req.params.id, {
+    const sale = await Transaction.findByPk(req.params.id, {
       include: [
-        { model: require('../models').Customer, as: 'customer', attributes: ['name', 'phone', 'email', 'address'] },
-        { model: require('../models').User, as: 'user', attributes: ['name'] }
+        { 
+          model: Customer, 
+          as: 'customer', 
+          attributes: ['name', 'phone', 'email', 'address', 'gstNumber'] 
+        }
       ]
     });
       
-    if (!transaction) {
-      return res.status(404).json({ error: 'Transaction not found' });
+    if (!sale) {
+      return res.status(404).json({ error: 'Sale not found' });
     }
-    res.json({ success: true, transaction });
+    res.json({ success: true, sale });
   } catch (error) {
-    console.error('Get transaction error:', error);
-    res.status(500).json({ error: 'Failed to get transaction', message: error.message });
+    console.error('Get sale error:', error);
+    res.status(500).json({ error: 'Failed to get sale', message: error.message });
   }
 });
 
-// Create new transaction
-router.post('/', async (req, res) => {
+// Create new sale
+router.post('/business/:businessId', async (req, res) => {
   try {
+    const { businessId } = req.params;
+    
+    if (!businessId || businessId === 'undefined') {
+      return res.status(400).json({ error: 'Invalid business ID' });
+    }
+
+    const business = await Business.findByPk(businessId);
+    if (!business) {
+      return res.status(404).json({ error: 'Business not found' });
+    }
+
     const transactionData = {
       ...req.body,
+      businessId,
+      type: 'sale',
       invoiceNumber: generateInvoiceNumber(),
       syncVersion: Date.now(),
       lastSyncAt: new Date()
     };
 
-    const transaction = await Transaction.create(transactionData);
+    const sale = await Transaction.create(transactionData);
 
     // Emit real-time update
     const io = req.app.get('io');
-    io.to(transaction.shopId).emit('transaction-created', {
-      transactionId: transaction.id,
-      data: transaction
+    io.to(businessId).emit('sale-created', {
+      saleId: sale.id,
+      data: sale
     });
 
-    res.status(201).json({ success: true, transaction });
+    res.status(201).json({ success: true, sale });
   } catch (error) {
-    console.error('Create transaction error:', error);
-    res.status(500).json({ error: 'Failed to create transaction', message: error.message });
+    console.error('Create sale error:', error);
+    res.status(500).json({ error: 'Failed to create sale', message: error.message });
   }
 });
 
-// Update transaction
+// Update sale
 router.put('/:id', async (req, res) => {
   try {
+    const sale = await Transaction.findByPk(req.params.id);
+    if (!sale) {
+      return res.status(404).json({ error: 'Sale not found' });
+    }
+    
     const updateData = {
       ...req.body,
       syncVersion: Date.now(),
       lastSyncAt: new Date()
     };
 
-    const transaction = await Transaction.findByPk(req.params.id);
-    if (!transaction) {
-      return res.status(404).json({ error: 'Transaction not found' });
-    }
-    
-    await transaction.update(updateData);
+    await sale.update(updateData);
 
     // Emit real-time update
     const io = req.app.get('io');
-    io.to(transaction.shopId).emit('transaction-updated', {
-      transactionId: transaction.id,
-      data: transaction
+    io.to(sale.businessId).emit('sale-updated', {
+      saleId: sale.id,
+      data: sale
     });
 
-    res.json({ success: true, transaction });
+    res.json({ success: true, sale });
   } catch (error) {
-    console.error('Update transaction error:', error);
-    res.status(500).json({ error: 'Failed to update transaction', message: error.message });
+    console.error('Update sale error:', error);
+    res.status(500).json({ error: 'Failed to update sale', message: error.message });
   }
 });
 
-// Delete transaction (soft delete)
+// Delete sale (soft delete)
 router.delete('/:id', async (req, res) => {
   try {
-    const transaction = await Transaction.findByPk(req.params.id);
-    if (!transaction) {
-      return res.status(404).json({ error: 'Transaction not found' });
+    const sale = await Transaction.findByPk(req.params.id);
+    if (!sale) {
+      return res.status(404).json({ error: 'Sale not found' });
     }
     
-    await transaction.update({ 
+    await sale.update({ 
       isDeleted: true,
       syncVersion: Date.now(),
       lastSyncAt: new Date()
@@ -156,24 +172,24 @@ router.delete('/:id', async (req, res) => {
 
     // Emit real-time update
     const io = req.app.get('io');
-    io.to(transaction.shopId).emit('transaction-deleted', {
-      transactionId: transaction.id
+    io.to(sale.businessId).emit('sale-deleted', {
+      saleId: sale.id
     });
 
-    res.json({ success: true, message: 'Transaction deleted successfully' });
+    res.json({ success: true, message: 'Sale deleted successfully' });
   } catch (error) {
-    console.error('Delete transaction error:', error);
-    res.status(500).json({ error: 'Failed to delete transaction', message: error.message });
+    console.error('Delete sale error:', error);
+    res.status(500).json({ error: 'Failed to delete sale', message: error.message });
   }
 });
 
 // Get sales summary
-router.get('/shop/:shopId/summary', async (req, res) => {
+router.get('/business/:businessId/summary', async (req, res) => {
   try {
-    const { shopId } = req.params;
+    const { businessId } = req.params;
     const { startDate, endDate } = req.query;
     
-    const whereClause = { shopId, isDeleted: false };
+    const whereClause = { businessId, type: 'sale', isDeleted: false };
     
     if (startDate || endDate) {
       whereClause.createdAt = {};
@@ -185,24 +201,28 @@ router.get('/shop/:shopId/summary', async (req, res) => {
       }
     }
 
-    const transactions = await Transaction.findAll({
+    const sales = await Transaction.findAll({
       where: whereClause,
-      attributes: ['total', 'paymentMethod']
+      attributes: ['total', 'paymentMethod', 'paymentStatus']
     });
 
-    // Calculate summary manually
+    // Calculate summary
     const summary = {
-      totalSales: transactions.reduce((sum, t) => sum + parseFloat(t.total || 0), 0),
-      totalTransactions: transactions.length,
-      avgSaleValue: transactions.length > 0 ? transactions.reduce((sum, t) => sum + parseFloat(t.total || 0), 0) / transactions.length : 0,
-      cashSales: transactions.filter(t => t.paymentMethod === 'cash').reduce((sum, t) => sum + parseFloat(t.total || 0), 0),
-      cardSales: transactions.filter(t => t.paymentMethod === 'card').reduce((sum, t) => sum + parseFloat(t.total || 0), 0),
-      creditSales: transactions.filter(t => t.paymentMethod === 'credit').reduce((sum, t) => sum + parseFloat(t.total || 0), 0)
+      totalSales: sales.reduce((sum, s) => sum + parseFloat(s.total || 0), 0),
+      totalTransactions: sales.length,
+      avgSaleValue: sales.length > 0 ? sales.reduce((sum, s) => sum + parseFloat(s.total || 0), 0) / sales.length : 0,
+      cashSales: sales.filter(s => s.paymentMethod === 'cash').reduce((sum, s) => sum + parseFloat(s.total || 0), 0),
+      cardSales: sales.filter(s => s.paymentMethod === 'card').reduce((sum, s) => sum + parseFloat(s.total || 0), 0),
+      upiSales: sales.filter(s => s.paymentMethod === 'upi').reduce((sum, s) => sum + parseFloat(s.total || 0), 0),
+      creditSales: sales.filter(s => s.paymentMethod === 'credit').reduce((sum, s) => sum + parseFloat(s.total || 0), 0),
+      paidSales: sales.filter(s => s.paymentStatus === 'paid').reduce((sum, s) => sum + parseFloat(s.total || 0), 0),
+      pendingSales: sales.filter(s => s.paymentStatus === 'pending').reduce((sum, s) => sum + parseFloat(s.total || 0), 0),
+      overdueSales: sales.filter(s => s.paymentStatus === 'overdue').reduce((sum, s) => sum + parseFloat(s.total || 0), 0)
     };
 
     res.json({
       success: true,
-      summary: summary
+      summary
     });
   } catch (error) {
     console.error('Get sales summary error:', error);

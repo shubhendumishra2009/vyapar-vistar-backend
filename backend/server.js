@@ -302,6 +302,31 @@ async function startServer() {
           console.log('⚠️ Product type migration warning:', error.message);
         }
 
+        // Migration 4c: Add businessId column to transactions table if it doesn't exist
+        try {
+          const transactionsTable = await queryInterface.describeTable('transactions');
+          if (!transactionsTable.businessId) {
+            console.log('🔄 Migrating: Adding businessId column to transactions table...');
+            await queryInterface.addColumn('transactions', 'businessId', {
+              type: Sequelize.UUID,
+              allowNull: true,
+            });
+            try {
+              await sequelize.query(
+                'ALTER TABLE transactions ADD CONSTRAINT transactions_business_fk FOREIGN KEY (businessId) REFERENCES businesses (id) ON DELETE CASCADE ON UPDATE CASCADE'
+              );
+            } catch (fkErr) {
+              console.log('ℹ️ transactions businessId FK already exists or skipped:', fkErr.message);
+            }
+            await queryInterface.addIndex('transactions', ['businessId']);
+            console.log('✅ Migration completed: businessId column added to transactions');
+          } else {
+            console.log('ℹ️ businessId column already exists in transactions table');
+          }
+        } catch (error) {
+          console.log('⚠️ Transactions businessId migration warning:', error.message);
+        }
+
         // Migration 6: Create field_schemas table if it doesn't exist
         try {
           const tableNames = await sequelize.query(
