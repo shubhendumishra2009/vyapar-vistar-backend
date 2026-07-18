@@ -10,6 +10,7 @@ const CustomerShop = require('./CustomerShop');
 const BusinessCustomer = require('./BusinessCustomer');
 const Product = require('./Product');
 const Transaction = require('./Transaction');
+const TransactionDetail = require('./TransactionDetail');
 const FieldSchema = require('./FieldSchema');
 
 // Define associations - clean and conflict-free
@@ -72,6 +73,11 @@ Transaction.belongsTo(Shop, { foreignKey: 'shopId', as: 'shop' });
 Business.hasMany(Product, { foreignKey: 'businessId', as: 'products' });
 Product.belongsTo(Business, { foreignKey: 'businessId', as: 'business' });
 
+// Transaction and TransactionDetail relationship
+Transaction.hasMany(TransactionDetail, { foreignKey: 'transactionId', as: 'details' });
+TransactionDetail.belongsTo(Transaction, { foreignKey: 'transactionId', as: 'transaction' });
+TransactionDetail.belongsTo(Product, { foreignKey: 'productId', as: 'product' });
+
 // Customer-Business many-to-many relationship through BusinessCustomer junction table
 Customer.belongsToMany(Business, {
   through: BusinessCustomer,
@@ -102,5 +108,6 @@ module.exports = {
   BusinessCustomer,
   Product,
   Transaction,
+  TransactionDetail,
   FieldSchema
 };

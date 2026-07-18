@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Transaction, Business, Product, Customer, sequelize } = require('../models');
+const { Transaction, TransactionDetail, Business, Product, Customer, sequelize } = require('../models');
 const { Op } = require('sequelize');
 
 // Get all sales for a business
@@ -107,8 +107,10 @@ router.post('/business/:businessId', async (req, res) => {
       return res.status(401).json({ error: 'User authentication required' });
     }
 
-    const transactionData = {
-      ...req.body,
+    const { items, ...transactionData } = req.body;
+    
+    const sale = await Transaction.create({
+      ...transactionData,
       businessId,
       userId,
       shopId: businessId, // Use businessId as shopId for now (can be updated later)
@@ -116,9 +118,23 @@ router.post('/business/:businessId', async (req, res) => {
       invoiceNumber: generateInvoiceNumber(),
       syncVersion: Date.now(),
       lastSyncAt: new Date()
-    };
+    });
 
-    const sale = await Transaction.create(transactionData);
+    // Create transaction details for each item
+    if (items && Array.isArray(items)) {
+      const transactionDetails = items.map((item) => ({
+        transactionId: sale.id,
+        productId: item.productId,
+        productName: item.productName,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        discount: item.discount || 0,
+        tax: item.tax || 0,
+        total: item.total
+      }));
+      
+      await TransactionDetail.bulkCreate(transactionDetails);
+    }
 
     // Emit real-time update
     const io = req.app.get('io');

@@ -316,11 +316,20 @@ async function startServer() {
             });
             console.log('✅ businessId column added');
             
+            // Drop the incorrect foreign key if it exists
+            try {
+              await sequelize.query('ALTER TABLE transactions DROP FOREIGN KEY transactions_ibfk_17');
+              console.log('✅ Dropped incorrect foreign key');
+            } catch (fkErr) {
+              console.log('ℹ️ No incorrect foreign key to drop');
+            }
+            
+            // Add correct foreign key referencing businesses table
             try {
               await sequelize.query(
                 'ALTER TABLE transactions ADD CONSTRAINT transactions_business_fk FOREIGN KEY (businessId) REFERENCES businesses (id) ON DELETE CASCADE ON UPDATE CASCADE'
               );
-              console.log('✅ Foreign key constraint added');
+              console.log('✅ Foreign key constraint added (references businesses)');
             } catch (fkErr) {
               console.log('ℹ️ Foreign key constraint skipped:', fkErr.message);
             }
@@ -334,6 +343,85 @@ async function startServer() {
         } catch (error) {
           console.log('⚠️ Transactions businessId migration warning:', error.message);
           console.log('⚠️ Error stack:', error.stack);
+        }
+
+        // Migration 4d: Create transaction_details table for line items
+        try {
+          console.log('🔍 Checking if transaction_details table exists...');
+          const tableNames = await sequelize.query(
+            "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'transaction_details'",
+            { type: sequelize.QueryTypes.SELECT }
+          );
+
+          if (tableNames.length === 0) {
+            console.log('🔄 Migrating: Creating transaction_details table...');
+            await queryInterface.createTable('transaction_details', {
+              id: {
+                type: Sequelize.UUID,
+                defaultValue: Sequelize.UUIDV4,
+                primaryKey: true
+              },
+              transactionId: {
+                type: Sequelize.UUID,
+                allowNull: false,
+                references: {
+                  model: 'transactions',
+                  key: 'id'
+                },
+                onDelete: 'CASCADE'
+              },
+              productId: {
+                type: Sequelize.UUID,
+                allowNull: false,
+                references: {
+                  model: 'products',
+                  key: 'id'
+                },
+                onDelete: 'RESTRICT'
+              },
+              productName: {
+                type: Sequelize.STRING(255),
+                allowNull: false
+              },
+              quantity: {
+                type: Sequelize.DECIMAL(10, 2),
+                allowNull: false
+              },
+              unitPrice: {
+                type: Sequelize.DECIMAL(10, 2),
+                allowNull: false
+              },
+              discount: {
+                type: Sequelize.DECIMAL(10, 2),
+                defaultValue: 0
+              },
+              tax: {
+                type: Sequelize.DECIMAL(10, 2),
+                defaultValue: 0
+              },
+              total: {
+                type: Sequelize.DECIMAL(10, 2),
+                allowNull: false
+              },
+              createdAt: {
+                type: Sequelize.DATE,
+                allowNull: false,
+                defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+              },
+              updatedAt: {
+                type: Sequelize.DATE,
+                allowNull: false,
+                defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+              }
+            });
+            await queryInterface.addIndex('transaction_details', ['transactionId']);
+            await queryInterface.addIndex('transaction_details', ['productId']);
+            console.log('✅ Migration completed: transaction_details table created');
+          } else {
+            console.log('ℹ️ transaction_details table already exists');
+          }
+        } catch (error) {
+          console.log('⚠️ Transaction details migration warning:', error.message);
         }
 
         // Migration 6: Create field_schemas table if it doesn't exist
