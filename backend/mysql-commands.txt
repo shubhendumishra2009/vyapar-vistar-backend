@@ -1,0 +1,10 @@
+-- Run these commands in MySQL command line:
+-- 1. Open MySQL: mysql -u root -p
+-- 2. Enter your MySQL root password when prompted
+-- 3. Run these SQL commands:
+
+CREATE DATABASE IF NOT EXISTS vyaparvistar CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER IF NOT EXISTS 'vyapar_user'@'localhost' IDENTIFIED BY 'vyapar123';
+GRANT ALL PRIVILEGES ON vyaparvistar.* TO 'vyapar_user'@'localhost';
+FLUSH PRIVILEGES;
+EXIT;
