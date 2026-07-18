@@ -479,7 +479,7 @@ export default function Sales() {
       {/* New Sale Modal */}
       {newSaleModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-6xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
               <h2 className="text-lg font-bold text-slate-900">New Sale</h2>
               <button
@@ -552,6 +552,7 @@ export default function Sales() {
                       <thead className="bg-slate-50 border-b border-slate-200">
                         <tr>
                           <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Product</th>
+                          <th className="px-4 py-3 text-center text-xs font-semibold text-slate-600 uppercase">UOM</th>
                           <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 uppercase">Price</th>
                           <th className="px-4 py-3 text-center text-xs font-semibold text-slate-600 uppercase">Stock</th>
                           <th className="px-4 py-3 text-center text-xs font-semibold text-slate-600 uppercase">Quantity</th>
@@ -563,8 +564,9 @@ export default function Sales() {
                           return (
                             <tr key={product.id} className={qty > 0 ? 'bg-indigo-50' : ''}>
                               <td className="px-4 py-3 text-sm text-slate-900">{product.name}</td>
+                              <td className="px-4 py-3 text-sm text-slate-600 text-center capitalize">{product.unit || 'pcs'}</td>
                               <td className="px-4 py-3 text-sm text-slate-600 text-right">₹{parseFloat(product.sellingPrice || 0).toFixed(2)}</td>
-                              <td className="px-4 py-3 text-sm text-slate-600 text-center">{product.stockQuantity || 0}</td>
+                              <td className="px-4 py-3 text-sm text-slate-600 text-center">{product.stock || 0}</td>
                               <td className="px-4 py-3 text-center">
                                 <input
                                   type="number"
