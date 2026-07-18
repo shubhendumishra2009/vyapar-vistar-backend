@@ -73,7 +73,11 @@ export default function Sales() {
   const [customers, setCustomers] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState('');
+  const [customerSearch, setCustomerSearch] = useState('');
+  const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
   const [selectedProducts, setSelectedProducts] = useState<any[]>([]);
+  const [productSearch, setProductSearch] = useState('');
+  const [showProductDropdown, setShowProductDropdown] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [paymentStatus, setPaymentStatus] = useState('paid');
   const [notes, setNotes] = useState('');
@@ -195,6 +199,17 @@ export default function Sales() {
     }
   };
 
+  // Filter customers based on search
+  const filteredCustomers = customers.filter(customer => 
+    customer.name.toLowerCase().includes(customerSearch.toLowerCase()) ||
+    customer.phone?.toLowerCase().includes(customerSearch.toLowerCase())
+  );
+
+  // Filter products based on search
+  const filteredProducts = products.filter(product => 
+    product.name.toLowerCase().includes(productSearch.toLowerCase())
+  );
+
   const addProductToSale = (product: any) => {
     const existing = selectedProducts.find(p => p.productId === product.id);
     if (existing) {
@@ -284,7 +299,9 @@ export default function Sales() {
 
   const resetNewSaleForm = () => {
     setSelectedCustomer('');
+    setCustomerSearch('');
     setSelectedProducts([]);
+    setProductSearch('');
     setPaymentMethod('cash');
     setPaymentStatus('paid');
     setNotes('');
@@ -464,45 +481,86 @@ export default function Sales() {
             </div>
 
             <div className="p-6">
-              {/* Customer Selection */}
-              <div className="mb-6">
+              {/* Customer Selection with Autocomplete */}
+              <div className="mb-6 relative">
                 <label className="block text-sm font-medium text-slate-700 mb-2">Customer *</label>
-                <select
-                  value={selectedCustomer}
-                  onChange={(e) => setSelectedCustomer(e.target.value)}
+                <input
+                  type="text"
+                  placeholder="Search customer by name or phone..."
+                  value={customerSearch}
+                  onChange={(e) => {
+                    setCustomerSearch(e.target.value);
+                    setShowCustomerDropdown(true);
+                  }}
+                  onFocus={() => setShowCustomerDropdown(true)}
+                  onBlur={() => setTimeout(() => setShowCustomerDropdown(false), 200)}
                   className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                >
-                  <option value="">Select Customer</option>
-                  {customers.map(customer => (
-                    <option key={customer.id} value={customer.id}>
-                      {customer.name} {customer.phone ? `(${customer.phone})` : ''}
-                    </option>
-                  ))}
-                </select>
+                />
+                {showCustomerDropdown && filteredCustomers.length > 0 && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                    {filteredCustomers.map(customer => (
+                      <div
+                        key={customer.id}
+                        onMouseDown={() => {
+                          setSelectedCustomer(customer.id);
+                          setCustomerSearch(customer.name);
+                          setShowCustomerDropdown(false);
+                        }}
+                        className="px-4 py-2 hover:bg-indigo-50 cursor-pointer border-b border-slate-100 last:border-b-0"
+                      >
+                        <p className="text-sm font-medium text-slate-900">{customer.name}</p>
+                        <p className="text-xs text-slate-500">{customer.phone} {customer.email ? `• ${customer.email}` : ''}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {selectedCustomer && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedCustomer('');
+                      setCustomerSearch('');
+                    }}
+                    className="mt-1 text-xs text-red-600 hover:text-red-700"
+                  >
+                    Clear selection
+                  </button>
+                )}
               </div>
 
-              {/* Product Selection */}
-              <div className="mb-6">
+              {/* Product Selection with Autocomplete */}
+              <div className="mb-6 relative">
                 <label className="block text-sm font-medium text-slate-700 mb-2">Add Products</label>
-                <select
+                <input
+                  type="text"
+                  placeholder="Search product by name..."
+                  value={productSearch}
                   onChange={(e) => {
-                    if (e.target.value) {
-                      const product = products.find(p => p.id === e.target.value);
-                      if (product) {
-                        addProductToSale(product);
-                        e.target.value = '';
-                      }
-                    }
+                    setProductSearch(e.target.value);
+                    setShowProductDropdown(true);
                   }}
+                  onFocus={() => setShowProductDropdown(true)}
+                  onBlur={() => setTimeout(() => setShowProductDropdown(false), 200)}
                   className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                >
-                  <option value="">Select Product to Add</option>
-                  {products.map(product => (
-                    <option key={product.id} value={product.id}>
-                      {product.name} - ₹{product.sellingPrice}
-                    </option>
-                  ))}
-                </select>
+                />
+                {showProductDropdown && filteredProducts.length > 0 && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                    {filteredProducts.map(product => (
+                      <div
+                        key={product.id}
+                        onMouseDown={() => {
+                          addProductToSale(product);
+                          setProductSearch('');
+                          setShowProductDropdown(false);
+                        }}
+                        className="px-4 py-2 hover:bg-indigo-50 cursor-pointer border-b border-slate-100 last:border-b-0"
+                      >
+                        <p className="text-sm font-medium text-slate-900">{product.name}</p>
+                        <p className="text-xs text-slate-500">₹{product.sellingPrice} {product.stockQuantity ? `• Stock: ${product.stockQuantity}` : ''}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Selected Products Table */}

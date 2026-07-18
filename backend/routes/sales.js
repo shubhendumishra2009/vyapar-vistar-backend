@@ -101,9 +101,17 @@ router.post('/business/:businessId', async (req, res) => {
       return res.status(404).json({ error: 'Business not found' });
     }
 
+    // Get user from auth token
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'User authentication required' });
+    }
+
     const transactionData = {
       ...req.body,
       businessId,
+      userId,
+      shopId: businessId, // Use businessId as shopId for now (can be updated later)
       type: 'sale',
       invoiceNumber: generateInvoiceNumber(),
       syncVersion: Date.now(),
