@@ -75,13 +75,14 @@ export default function Sales() {
   const [selectedCustomer, setSelectedCustomer] = useState('');
   const [customerSearch, setCustomerSearch] = useState('');
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
-  const [selectedProducts, setSelectedProducts] = useState<any[]>([]);
-  const [productSearch, setProductSearch] = useState('');
-  const [showProductDropdown, setShowProductDropdown] = useState(false);
+  const [productQuantities, setProductQuantities] = useState<{ [key: string]: number }>({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [paymentStatus, setPaymentStatus] = useState('paid');
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const productsPerPage = 10;
 
   useEffect(() => {
     if (businessId) {
@@ -191,7 +192,10 @@ export default function Sales() {
       const customersData = customersRes as any;
       const productsData = productsRes as any;
       if (customersData && customersData.success) setCustomers(customersData.customers || []);
-      if (productsData && productsData.success) setProducts(productsData.products || []);
+      if (productsData && productsData.success) {
+        setProducts(productsData.products || []);
+        setTotalPages(Math.ceil((productsData.products || []).length / productsPerPage));
+      }
       setNewSaleModalOpen(true);
     } catch (error) {
       console.error('Failed to load form data:', error);
@@ -205,60 +209,66 @@ export default function Sales() {
     customer.phone?.toLowerCase().includes(customerSearch.toLowerCase())
   );
 
-  // Filter products based on search
-  const filteredProducts = products.filter(product => 
-    product.name.toLowerCase().includes(productSearch.toLowerCase())
+  // Get current page products
+  const currentProducts = products.slice(
+    (currentPage - 1) * productsPerPage,
+    currentPage * productsPerPage
   );
 
-  const addProductToSale = (product: any) => {
-    const existing = selectedProducts.find(p => p.productId === product.id);
-    if (existing) {
-      setSelectedProducts(selectedProducts.map(p => 
-        p.productId === product.id 
-          ? { ...p, quantity: p.quantity + 1, total: (p.quantity + 1) * p.unitPrice }
-          : p
-      ));
-    } else {
-      setSelectedProducts([...selectedProducts, {
-        productId: product.id,
-        productName: product.name,
-        quantity: 1,
-        unitPrice: parseFloat(product.sellingPrice || 0),
-        discount: 0,
-        tax: parseFloat(product.taxRate || 0),
-        total: parseFloat(product.sellingPrice || 0)
-      }]);
-    }
-  };
-
-  const removeProductFromSale = (productId: string) => {
-    setSelectedProducts(selectedProducts.filter(p => p.productId !== productId));
-  };
-
+  // Update product quantity
   const updateProductQuantity = (productId: string, quantity: number) => {
-    setSelectedProducts(selectedProducts.map(p => {
-      if (p.productId === productId) {
-        return {
-          ...p,
-          quantity,
-          total: quantity * p.unitPrice
-        };
-      }
-      return p;
-    }));
+    setProductQuantities({
+      ...productQuantities,
+      [productId]: Math.max(0, quantity)
+    });
   };
 
+  // Get selected products (quantity > 0)
+  const getSelectedProducts = () => {
+    return Object.entries(productQuantities)
+      .filter(([_, qty]) => qty > 0)
+      .map(([productId, quantity]) => {
+        const product = products.find(p => p.id === productId);
+        if (!product) return null;
+        return {
+          productId: product.id,
+          productName: product.name,
+          quantity: quantity,
+          unitPrice: parseFloat(product.sellingPrice || 0),
+          discount: 0,
+          tax: parseFloat(product.taxRate || 0),
+          total: quantity * parseFloat(product.sellingPrice || 0)
+        };
+      })
+      .filter(Boolean);
+  };
+
+  // Calculate totals
   const calculateTotals = () => {
-    const subtotal = selectedProducts.reduce((sum, p) => sum + p.total, 0);
-    const discount = selectedProducts.reduce((sum, p) => sum + p.discount, 0);
-    const tax = selectedProducts.reduce((sum, p) => sum + (p.total * p.tax / 100), 0);
+    const selected = getSelectedProducts() || [];
+    const subtotal = selected.reduce((sum: number, p: any) => sum + p.total, 0);
+    const discount = selected.reduce((sum: number, p: any) => sum + p.discount, 0);
+    const tax = selected.reduce((sum: number, p: any) => sum + (p.total * p.tax / 100), 0);
     const grandTotal = subtotal - discount + tax;
     return { subtotal, discount, tax, grandTotal };
   };
 
+  const removeProductFromSale = (productId: string) => {
+    setProductQuantities({
+      ...productQuantities,
+      [productId]: 0
+    });
+  };
+
   const handleCreateSale = async () => {
-    if (!businessId || !selectedCustomer || selectedProducts.length === 0) {
-      toast.error('Please select a customer and at least one product');
+    if (!businessId || !selectedCustomer) {
+      toast.error('Please select a customer');
+      return;
+    }
+
+    const selectedProducts = getSelectedProducts();
+    if (selectedProducts.length === 0) {
+      toast.error('Please add at least one product');
       return;
     }
 
@@ -300,8 +310,8 @@ export default function Sales() {
   const resetNewSaleForm = () => {
     setSelectedCustomer('');
     setCustomerSearch('');
-    setSelectedProducts([]);
-    setProductSearch('');
+    setProductQuantities({});
+    setCurrentPage(1);
     setPaymentMethod('cash');
     setPaymentStatus('paid');
     setNotes('');
@@ -528,86 +538,106 @@ export default function Sales() {
                 )}
               </div>
 
-              {/* Product Selection with Autocomplete */}
-              <div className="mb-6 relative">
-                <label className="block text-sm font-medium text-slate-700 mb-2">Add Products</label>
-                <input
-                  type="text"
-                  placeholder="Search product by name..."
-                  value={productSearch}
-                  onChange={(e) => {
-                    setProductSearch(e.target.value);
-                    setShowProductDropdown(true);
-                  }}
-                  onFocus={() => setShowProductDropdown(true)}
-                  onBlur={() => setTimeout(() => setShowProductDropdown(false), 200)}
-                  className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-                {showProductDropdown && filteredProducts.length > 0 && (
-                  <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                    {filteredProducts.map(product => (
-                      <div
-                        key={product.id}
-                        onMouseDown={() => {
-                          addProductToSale(product);
-                          setProductSearch('');
-                          setShowProductDropdown(false);
-                        }}
-                        className="px-4 py-2 hover:bg-indigo-50 cursor-pointer border-b border-slate-100 last:border-b-0"
-                      >
-                        <p className="text-sm font-medium text-slate-900">{product.name}</p>
-                        <p className="text-xs text-slate-500">₹{product.sellingPrice} {product.stockQuantity ? `• Stock: ${product.stockQuantity}` : ''}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Selected Products Table */}
-              {selectedProducts.length > 0 && (
+              {/* Product Table with Pagination */}
+              {products.length > 0 && (
                 <div className="mb-6">
-                  <table className="w-full">
-                    <thead className="bg-slate-50 border-b border-slate-200">
-                      <tr>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Product</th>
-                        <th className="px-4 py-3 text-center text-xs font-semibold text-slate-600 uppercase">Qty</th>
-                        <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 uppercase">Price</th>
-                        <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 uppercase">Total</th>
-                        <th className="px-4 py-3 text-center text-xs font-semibold text-slate-600 uppercase">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-200">
-                      {selectedProducts.map((item, index) => (
-                        <tr key={index}>
-                          <td className="px-4 py-3 text-sm text-slate-900">{item.productName}</td>
-                          <td className="px-4 py-3">
-                            <input
-                              type="number"
-                              min="1"
-                              value={item.quantity}
-                              onChange={(e) => updateProductQuantity(item.productId, parseInt(e.target.value) || 1)}
-                              className="w-20 px-2 py-1 text-sm text-center border border-slate-200 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                            />
-                          </td>
-                          <td className="px-4 py-3 text-sm text-slate-600 text-right">₹{item.unitPrice.toFixed(2)}</td>
-                          <td className="px-4 py-3 text-sm font-semibold text-slate-900 text-right">₹{item.total.toFixed(2)}</td>
-                          <td className="px-4 py-3 text-center">
-                            <button
-                              onClick={() => removeProductFromSale(item.productId)}
-                              className="p-1 text-red-600 hover:bg-red-50 rounded"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </td>
+                  <div className="flex items-center justify-between mb-3">
+                    <label className="block text-sm font-medium text-slate-700">Products</label>
+                    <span className="text-xs text-slate-500">
+                      Showing {(currentPage - 1) * productsPerPage + 1} to {Math.min(currentPage * productsPerPage, products.length)} of {products.length} products
+                    </span>
+                  </div>
+                  <div className="border border-slate-200 rounded-lg overflow-hidden">
+                    <table className="w-full">
+                      <thead className="bg-slate-50 border-b border-slate-200">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Product</th>
+                          <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 uppercase">Price</th>
+                          <th className="px-4 py-3 text-center text-xs font-semibold text-slate-600 uppercase">Stock</th>
+                          <th className="px-4 py-3 text-center text-xs font-semibold text-slate-600 uppercase">Quantity</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-slate-200">
+                        {currentProducts.map((product) => {
+                          const qty = productQuantities[product.id] || 0;
+                          return (
+                            <tr key={product.id} className={qty > 0 ? 'bg-indigo-50' : ''}>
+                              <td className="px-4 py-3 text-sm text-slate-900">{product.name}</td>
+                              <td className="px-4 py-3 text-sm text-slate-600 text-right">₹{parseFloat(product.sellingPrice || 0).toFixed(2)}</td>
+                              <td className="px-4 py-3 text-sm text-slate-600 text-center">{product.stockQuantity || 0}</td>
+                              <td className="px-4 py-3 text-center">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  value={qty}
+                                  onChange={(e) => updateProductQuantity(product.id, parseInt(e.target.value) || 0)}
+                                  className={`w-20 px-2 py-1 text-sm text-center border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                                    qty > 0 ? 'border-indigo-300 bg-white' : 'border-slate-200'
+                                  }`}
+                                />
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                  {/* Pagination */}
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-between mt-4">
+                      <button
+                        onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                        disabled={currentPage === 1}
+                        className="px-3 py-1 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Previous
+                      </button>
+                      <span className="text-sm text-slate-600">
+                        Page {currentPage} of {totalPages}
+                      </span>
+                      <button
+                        onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                        disabled={currentPage === totalPages}
+                        className="px-3 py-1 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Selected Products Summary */}
+              {getSelectedProducts().length > 0 && (
+                <div className="mb-6">
+                  <h3 className="text-sm font-semibold text-slate-700 mb-3">Selected Items</h3>
+                  <div className="border border-slate-200 rounded-lg overflow-hidden">
+                    <table className="w-full">
+                      <thead className="bg-slate-50 border-b border-slate-200">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Product</th>
+                          <th className="px-4 py-3 text-center text-xs font-semibold text-slate-600 uppercase">Qty</th>
+                          <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 uppercase">Price</th>
+                          <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 uppercase">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-200">
+                        {getSelectedProducts().map((item: any, index: number) => (
+                          <tr key={index}>
+                            <td className="px-4 py-3 text-sm text-slate-900">{item.productName}</td>
+                            <td className="px-4 py-3 text-sm text-slate-600 text-center">{item.quantity}</td>
+                            <td className="px-4 py-3 text-sm text-slate-600 text-right">₹{item.unitPrice.toFixed(2)}</td>
+                            <td className="px-4 py-3 text-sm font-semibold text-slate-900 text-right">₹{item.total.toFixed(2)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               )}
 
               {/* Totals */}
-              {selectedProducts.length > 0 && (
+              {getSelectedProducts().length > 0 && (
                 <div className="flex justify-end mb-6">
                   <div className="w-64">
                     <div className="flex justify-between py-2 border-b border-slate-200">
@@ -676,7 +706,7 @@ export default function Sales() {
                 </button>
                 <button
                   onClick={handleCreateSale}
-                  disabled={submitting || !selectedCustomer || selectedProducts.length === 0}
+                  disabled={submitting || !selectedCustomer || getSelectedProducts().length === 0}
                   className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg hover:from-indigo-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {submitting ? 'Creating...' : 'Create Sale'}
