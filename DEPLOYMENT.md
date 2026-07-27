@@ -108,7 +108,7 @@ DB_HOST=localhost
 DB_PORT=3306
 DB_USER=root
 DB_PASSWORD=rootroot
-DB_NAME=vyapar_vistar_local
+DB_NAME=vyaparvistar
 
 # Server Configuration
 PORT=5000
@@ -312,7 +312,7 @@ npm start
 ```
 
 #### Database:
-- Uses local MySQL: `vyapar_vistar_local`
+- Uses local MySQL: `vyaparvistar`
 - Connection: `localhost:3306`
 - User: `root`
 - Password: `rootroot`
