@@ -12,6 +12,9 @@ const Product = require('./Product');
 const Transaction = require('./Transaction');
 const TransactionDetail = require('./TransactionDetail');
 const FieldSchema = require('./FieldSchema');
+const StockMovement = require('./StockMovement');
+const Stock = require('./Stock');
+const Supplier = require('./Supplier');
 
 // Define associations - clean and conflict-free
 // User-Shop many-to-many relationship
@@ -78,6 +81,18 @@ Transaction.hasMany(TransactionDetail, { foreignKey: 'transactionId', as: 'detai
 TransactionDetail.belongsTo(Transaction, { foreignKey: 'transactionId', as: 'transaction' });
 TransactionDetail.belongsTo(Product, { foreignKey: 'productId', as: 'product' });
 
+// StockMovement relationships
+Product.hasMany(StockMovement, { foreignKey: 'productId', as: 'stockMovements' });
+StockMovement.belongsTo(Product, { foreignKey: 'productId', as: 'product' });
+Business.hasMany(StockMovement, { foreignKey: 'businessId', as: 'stockMovements' });
+Shop.hasMany(StockMovement, { foreignKey: 'shopId', as: 'stockMovements' });
+
+// Stock relationships (current stock by batch)
+Product.hasMany(Stock, { foreignKey: 'productId', as: 'stockBatches' });
+Stock.belongsTo(Product, { foreignKey: 'productId', as: 'product' });
+Business.hasMany(Stock, { foreignKey: 'businessId', as: 'stockBatches' });
+Shop.hasMany(Stock, { foreignKey: 'shopId', as: 'stockBatches' });
+
 // Customer-Business many-to-many relationship through BusinessCustomer junction table
 Customer.belongsToMany(Business, {
   through: BusinessCustomer,
@@ -92,6 +107,10 @@ Business.belongsToMany(Customer, {
   otherKey: 'customerId',
   as: 'customers'
 });
+
+// Supplier relationships
+Business.hasMany(Supplier, { foreignKey: 'businessId', as: 'suppliers' });
+Supplier.belongsTo(Business, { foreignKey: 'businessId', as: 'business' });
 
 // FieldSchema - stand-alone configuration table, no direct FK associations needed
 // It is queried by businessType to get the schema for a specific business type.
@@ -109,5 +128,8 @@ module.exports = {
   Product,
   Transaction,
   TransactionDetail,
-  FieldSchema
+  FieldSchema,
+  StockMovement,
+  Stock,
+  Supplier
 };

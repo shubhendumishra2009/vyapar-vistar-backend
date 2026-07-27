@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Product, Shop, Business, FieldSchema, sequelize } = require('../models');
+const { Product, Shop, Business, FieldSchema, StockMovement, Stock, sequelize } = require('../models');
 const { Op } = require('sequelize');
 
 // Get all products for a shop
@@ -126,6 +126,63 @@ router.get('/business/:businessId', async (req, res) => {
   }
 });
 
+// Search products with batch info for sale (new endpoint)
+router.get('/business/:businessId/sale-search', async (req, res) => {
+  try {
+    const { businessId } = req.params;
+    const { search = '' } = req.query;
+
+    if (!businessId || businessId === 'undefined') {
+      return res.status(400).json({ error: 'Invalid business ID' });
+    }
+
+    const whereClause = { businessId, isActive: true, isDeleted: false };
+
+    if (search.trim()) {
+      whereClause[Op.or] = [
+        { name: { [Op.like]: `%${search.trim()}%` } },
+        { sku: { [Op.like]: `%${search.trim()}%` } },
+        { barcode: { [Op.like]: `%${search.trim()}%` } }
+      ];
+    }
+
+    const products = await Product.findAll({
+      where: whereClause,
+      order: [['name', 'ASC']],
+      limit: 20,
+      attributes: [
+        'id', 'name', 'sku', 'unit', 'sellingPrice', 'stock', 'purchasePrice'
+      ]
+    });
+
+    // For each product, load batches with available stock
+    const result = [];
+    for (const product of products) {
+      const p = product.dataValues || product.get({ plain: true });
+      
+      const batches = await Stock.findAll({
+        where: {
+          productId: p.id,
+          businessId,
+          quantity: { [Op.gt]: 0 }
+        },
+        order: [['purchaseDate', 'ASC'], ['createdAt', 'ASC']],
+        attributes: ['id', 'batchNumber', 'quantity', 'purchasePrice', 'sellingPrice', 'expiryDate', 'purchaseDate']
+      });
+
+      result.push({
+        ...p,
+        batches: batches.map(b => b.get({ plain: true }))
+      });
+    }
+
+    res.json({ success: true, products: result });
+  } catch (error) {
+    console.error('Get sale products error:', error);
+    res.status(500).json({ error: 'Failed to get sale products', message: error.message });
+  }
+});
+
 // Get product categories for a business
 router.get('/business/:businessId/categories', async (req, res) => {
   try {
@@ -243,6 +300,44 @@ router.post('/business/:businessId', async (req, res) => {
     }
 
     const product = await Product.create(productData);
+
+    // Create initial stock batch and movement if product has opening stock
+    if (product.stock > 0) {
+      const batchNumber = `BATCH-${Date.now().toString().slice(-6)}-${product.id.slice(0, 6)}`;
+      
+      // Create stock record (current stock by batch)
+      await Stock.create({
+        productId: product.id,
+        businessId: product.businessId,
+        shopId: product.shopId,
+        batchNumber: batchNumber,
+        quantity: product.stock,
+        purchasePrice: product.purchasePrice || 0,
+        sellingPrice: product.sellingPrice || 0,
+        purchaseDate: new Date(),
+        notes: 'Opening stock',
+        createdBy: product.createdBy
+      });
+
+      // Create stock movement record (audit trail)
+      await StockMovement.create({
+        productId: product.id,
+        businessId: product.businessId,
+        shopId: product.shopId,
+        batchNumber: batchNumber,
+        type: 'OPENING_STOCK',
+        quantity: product.stock,
+        balanceAfter: product.stock,
+        referenceType: 'product_creation',
+        referenceId: product.id,
+        purchasePrice: product.purchasePrice || 0,
+        sellingPrice: product.sellingPrice || 0,
+        notes: `Opening stock - Batch: ${batchNumber}`,
+        createdBy: product.createdBy
+      });
+
+      console.log(`📦 Opening stock created for ${product.name}: ${product.stock} units (Batch: ${batchNumber})`);
+    }
 
     const io = req.app.get('io');
     if (product.shopId) {

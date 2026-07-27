@@ -109,14 +109,17 @@ const Transaction = sequelize.define('Transaction', {
 
 // Helper function to calculate totals
 function calculateTotals(transaction) {
-  if (transaction.items && Array.isArray(transaction.items)) {
-    const subtotal = transaction.items.reduce((sum, item) => {
-      return sum + (parseFloat(item.totalPrice) || 0);
-    }, 0);
-    
-    transaction.subtotal = subtotal;
-    transaction.total = subtotal + parseFloat(transaction.tax || 0) - parseFloat(transaction.discount || 0);
-  }
+  // Always set subtotal and total to ensure required fields are populated
+  const items = transaction.items && Array.isArray(transaction.items) ? transaction.items : [];
+  
+  const subtotal = items.reduce((sum, item) => {
+    // Support both 'totalPrice' and 'total' property names
+    const itemTotal = parseFloat(item.totalPrice || item.total || 0);
+    return sum + itemTotal;
+  }, 0);
+  
+  transaction.subtotal = subtotal;
+  transaction.total = subtotal + parseFloat(transaction.tax || 0) - parseFloat(transaction.discount || 0);
 }
 
 // Instance method to add item to transaction

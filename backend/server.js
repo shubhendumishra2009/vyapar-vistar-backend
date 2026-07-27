@@ -302,7 +302,7 @@ async function startServer() {
           console.log('⚠️ Product type migration warning:', error.message);
         }
 
-        // Migration 4c: Add businessId column to transactions table if it doesn't exist
+        // Migration 4c: Fix businessId column in transactions table
         try {
           console.log('🔍 Checking transactions table for businessId column...');
           const transactionsTable = await queryInterface.describeTable('transactions');
@@ -315,31 +315,52 @@ async function startServer() {
               allowNull: true,
             });
             console.log('✅ businessId column added');
+          } else {
+            console.log('ℹ️ businessId column already exists');
+          }
+          
+          // Drop ALL foreign keys on businessId column
+          console.log('🔄 Dropping all foreign keys on transactions.businessId...');
+          try {
+            // Get all foreign keys on transactions table
+            const foreignKeys = await sequelize.query(
+              "SELECT CONSTRAINT_NAME FROM information_schema.KEY_COLUMN_USAGE WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'transactions' AND COLUMN_NAME = 'businessId' AND REFERENCED_TABLE_NAME IS NOT NULL",
+              { type: sequelize.QueryTypes.SELECT }
+            );
             
-            // Drop the incorrect foreign key if it exists
-            try {
-              await sequelize.query('ALTER TABLE transactions DROP FOREIGN KEY transactions_ibfk_17');
-              console.log('✅ Dropped incorrect foreign key');
-            } catch (fkErr) {
-              console.log('ℹ️ No incorrect foreign key to drop');
+            console.log('🔍 Found foreign keys:', foreignKeys);
+            
+            for (const fk of foreignKeys) {
+              try {
+                await sequelize.query(`ALTER TABLE transactions DROP FOREIGN KEY ${fk.CONSTRAINT_NAME}`);
+                console.log(`✅ Dropped foreign key: ${fk.CONSTRAINT_NAME}`);
+              } catch (err) {
+                console.log(`⚠️ Could not drop ${fk.CONSTRAINT_NAME}:`, err.message);
+              }
             }
-            
-            // Add correct foreign key referencing businesses table
-            try {
-              await sequelize.query(
-                'ALTER TABLE transactions ADD CONSTRAINT transactions_business_fk FOREIGN KEY (businessId) REFERENCES businesses (id) ON DELETE CASCADE ON UPDATE CASCADE'
-              );
-              console.log('✅ Foreign key constraint added (references businesses)');
-            } catch (fkErr) {
-              console.log('ℹ️ Foreign key constraint skipped:', fkErr.message);
-            }
-            
+          } catch (err) {
+            console.log('⚠️ Error dropping foreign keys:', err.message);
+          }
+          
+          // Add foreign key referencing businesses table
+          try {
+            await sequelize.query(
+              'ALTER TABLE transactions ADD CONSTRAINT transactions_business_fk FOREIGN KEY (businessId) REFERENCES businesses (id) ON DELETE SET NULL ON UPDATE CASCADE'
+            );
+            console.log('✅ Foreign key constraint added (references businesses, SET NULL on delete)');
+          } catch (fkErr) {
+            console.log('ℹ️ Foreign key constraint skipped:', fkErr.message);
+          }
+          
+          // Add index
+          try {
             await queryInterface.addIndex('transactions', ['businessId']);
             console.log('✅ Index added on businessId');
-            console.log('✅ Migration completed: businessId column added to transactions');
-          } else {
-            console.log('ℹ️ businessId column already exists in transactions table');
+          } catch (idxErr) {
+            console.log('ℹ️ Index already exists or skipped:', idxErr.message);
           }
+          
+          console.log('✅ Migration completed: businessId column configured');
         } catch (error) {
           console.log('⚠️ Transactions businessId migration warning:', error.message);
           console.log('⚠️ Error stack:', error.stack);
@@ -422,6 +443,346 @@ async function startServer() {
           }
         } catch (error) {
           console.log('⚠️ Transaction details migration warning:', error.message);
+        }
+
+        // Migration 7: Create stock table (current stock by batch) if it doesn't exist
+        try {
+          console.log('🔍 Checking if stock table exists...');
+          const tableNames = await sequelize.query(
+            "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'stock'",
+            { type: sequelize.QueryTypes.SELECT }
+          );
+
+          if (tableNames.length === 0) {
+            console.log('🔄 Migrating: Creating stock table...');
+            await queryInterface.createTable('stock', {
+              id: {
+                type: Sequelize.UUID,
+                defaultValue: Sequelize.UUIDV4,
+                primaryKey: true
+              },
+              businessId: {
+                type: Sequelize.UUID,
+                allowNull: false,
+                references: {
+                  model: 'businesses',
+                  key: 'id'
+                },
+                onDelete: 'CASCADE'
+              },
+              shopId: {
+                type: Sequelize.UUID,
+                allowNull: false,
+                references: {
+                  model: 'shops',
+                  key: 'id'
+                },
+                onDelete: 'CASCADE'
+              },
+              productId: {
+                type: Sequelize.UUID,
+                allowNull: false,
+                references: {
+                  model: 'products',
+                  key: 'id'
+                },
+                onDelete: 'CASCADE'
+              },
+              batchNumber: {
+                type: Sequelize.STRING(100),
+                allowNull: false
+              },
+              quantity: {
+                type: Sequelize.INTEGER,
+                allowNull: false,
+                defaultValue: 0
+              },
+              purchasePrice: {
+                type: Sequelize.DECIMAL(10, 2),
+                allowNull: true
+              },
+              sellingPrice: {
+                type: Sequelize.DECIMAL(10, 2),
+                allowNull: true
+              },
+              expiryDate: {
+                type: Sequelize.DATE,
+                allowNull: true
+              },
+              purchaseDate: {
+                type: Sequelize.DATE,
+                allowNull: true
+              },
+              supplierName: {
+                type: Sequelize.STRING(255),
+                allowNull: true
+              },
+              notes: {
+                type: Sequelize.TEXT,
+                allowNull: true
+              },
+              lastSyncAt: {
+                type: Sequelize.DATE,
+                allowNull: true
+              },
+              syncVersion: {
+                type: Sequelize.BIGINT,
+                defaultValue: 1
+              },
+              createdAt: {
+                type: Sequelize.DATE,
+                allowNull: false,
+                defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+              },
+              updatedAt: {
+                type: Sequelize.DATE,
+                allowNull: false,
+                defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+              }
+            }, {
+              indexes: [
+                { fields: ['productId', 'businessId'] },
+                { fields: ['batchNumber'] },
+                { fields: ['expiryDate'] }
+              ]
+            });
+            console.log('✅ Migration completed: stock table created');
+          } else {
+            console.log('ℹ️ stock table already exists');
+            
+            // Migration 7a: Drop foreign key constraint on shopId (web app is business-scoped, not shop-scoped)
+            try {
+              console.log('🔄 Dropping foreign key constraint on stock.shopId...');
+              // Get all foreign keys on stock table
+              const foreignKeys = await sequelize.query(
+                "SELECT CONSTRAINT_NAME FROM information_schema.KEY_COLUMN_USAGE WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'stock' AND COLUMN_NAME = 'shopId' AND REFERENCED_TABLE_NAME IS NOT NULL",
+                { type: sequelize.QueryTypes.SELECT }
+              );
+              
+              console.log('🔍 Found foreign keys on stock.shopId:', foreignKeys);
+              
+              if (foreignKeys.length > 0) {
+                for (const fk of foreignKeys) {
+                  try {
+                    await sequelize.query(`ALTER TABLE stock DROP FOREIGN KEY ${fk.CONSTRAINT_NAME}`);
+                    console.log(`✅ Dropped foreign key: ${fk.CONSTRAINT_NAME}`);
+                  } catch (err) {
+                    console.log(`⚠️ Could not drop ${fk.CONSTRAINT_NAME}:`, err.message);
+                  }
+                }
+              } else {
+                console.log('ℹ️ No foreign keys found on stock.shopId');
+              }
+            } catch (migrationError) {
+              console.log('⚠️ Stock foreign key migration warning:', migrationError.message);
+            }
+          }
+        } catch (error) {
+          console.log('⚠️ Stock table migration warning:', error.message);
+        }
+
+        // Migration 8: Create stock_movements table if it doesn't exist
+        try {
+          console.log('🔍 Checking if stock_movements table exists...');
+          const tableNames = await sequelize.query(
+            "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'stock_movements'",
+            { type: sequelize.QueryTypes.SELECT }
+          );
+
+          if (tableNames.length === 0) {
+            console.log('🔄 Migrating: Creating stock_movements table...');
+            await queryInterface.createTable('stock_movements', {
+              id: {
+                type: Sequelize.UUID,
+                defaultValue: Sequelize.UUIDV4,
+                primaryKey: true
+              },
+              businessId: {
+                type: Sequelize.UUID,
+                allowNull: false,
+                references: {
+                  model: 'businesses',
+                  key: 'id'
+                },
+                onDelete: 'CASCADE'
+              },
+              shopId: {
+                type: Sequelize.UUID,
+                allowNull: false,
+                references: {
+                  model: 'shops',
+                  key: 'id'
+                },
+                onDelete: 'CASCADE'
+              },
+              productId: {
+                type: Sequelize.UUID,
+                allowNull: false,
+                references: {
+                  model: 'products',
+                  key: 'id'
+                },
+                onDelete: 'CASCADE'
+              },
+              transactionId: {
+                type: Sequelize.UUID,
+                allowNull: true
+              },
+              batchNumber: {
+                type: Sequelize.STRING(100),
+                allowNull: true
+              },
+              type: {
+                type: Sequelize.ENUM('OPENING_STOCK', 'PURCHASE', 'SALE', 'PURCHASE_RETURN', 'SALE_RETURN', 'ADJUSTMENT', 'TRANSFER'),
+                allowNull: false
+              },
+              quantity: {
+                type: Sequelize.INTEGER,
+                allowNull: false
+              },
+              balanceAfter: {
+                type: Sequelize.INTEGER,
+                allowNull: false
+              },
+              referenceType: {
+                type: Sequelize.STRING(50),
+                allowNull: true
+              },
+              referenceId: {
+                type: Sequelize.UUID,
+                allowNull: true
+              },
+              purchasePrice: {
+                type: Sequelize.DECIMAL(10, 2),
+                allowNull: true
+              },
+              sellingPrice: {
+                type: Sequelize.DECIMAL(10, 2),
+                allowNull: true
+              },
+              unitPrice: {
+                type: Sequelize.DECIMAL(10, 2),
+                allowNull: true
+              },
+              expiryDate: {
+                type: Sequelize.DATE,
+                allowNull: true
+              },
+              purchaseInvoiceNumber: {
+                type: Sequelize.STRING(100),
+                allowNull: true
+              },
+              saleInvoiceNumber: {
+                type: Sequelize.STRING(100),
+                allowNull: true
+              },
+              notes: {
+                type: Sequelize.TEXT,
+                allowNull: true
+              },
+              createdBy: {
+                type: Sequelize.UUID,
+                allowNull: true
+              },
+              lastSyncAt: {
+                type: Sequelize.DATE,
+                allowNull: true
+              },
+              syncVersion: {
+                type: Sequelize.BIGINT,
+                defaultValue: 1
+              },
+              createdAt: {
+                type: Sequelize.DATE,
+                allowNull: false,
+                defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+              },
+              updatedAt: {
+                type: Sequelize.DATE,
+                allowNull: false,
+                defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+              }
+            }, {
+              indexes: [
+                { fields: ['productId', 'businessId'] },
+                { fields: ['transactionId'] },
+                { fields: ['type'] },
+                { fields: ['createdAt'] }
+              ]
+            });
+            console.log('✅ Migration completed: stock_movements table created');
+          } else {
+            console.log('ℹ️ stock_movements table already exists');
+            
+            // Migration 8a: Add batchNumber column if it doesn't exist
+            try {
+              const stockMovementsTable = await queryInterface.describeTable('stock_movements');
+              if (!stockMovementsTable.batchNumber) {
+                console.log('🔄 Migrating: Adding batchNumber column to stock_movements...');
+                await queryInterface.addColumn('stock_movements', 'batchNumber', {
+                  type: Sequelize.STRING(100),
+                  allowNull: true
+                });
+                await queryInterface.addIndex('stock_movements', ['batchNumber']);
+                console.log('✅ Migration completed: batchNumber column added to stock_movements');
+              } else {
+                console.log('ℹ️ batchNumber column already exists in stock_movements');
+              }
+
+              // Migration 8b: Add purchaseInvoiceNumber column if it doesn't exist
+              if (!stockMovementsTable.purchaseInvoiceNumber) {
+                console.log('🔄 Migrating: Adding purchaseInvoiceNumber column...');
+                await queryInterface.addColumn('stock_movements', 'purchaseInvoiceNumber', {
+                  type: Sequelize.STRING(100),
+                  allowNull: true
+                });
+                console.log('✅ Migration completed: purchaseInvoiceNumber column added');
+              }
+
+              // Migration 8c: Add saleInvoiceNumber column if it doesn't exist
+              if (!stockMovementsTable.saleInvoiceNumber) {
+                console.log('🔄 Migrating: Adding saleInvoiceNumber column...');
+                await queryInterface.addColumn('stock_movements', 'saleInvoiceNumber', {
+                  type: Sequelize.STRING(100),
+                  allowNull: true
+                });
+                console.log('✅ Migration completed: saleInvoiceNumber column added');
+              }
+
+              // Migration 8d: Add purchasePrice and sellingPrice columns if they don't exist
+              if (!stockMovementsTable.purchasePrice) {
+                console.log('🔄 Migrating: Adding purchasePrice column...');
+                await queryInterface.addColumn('stock_movements', 'purchasePrice', {
+                  type: Sequelize.DECIMAL(10, 2),
+                  allowNull: true
+                });
+                console.log('✅ Migration completed: purchasePrice column added');
+              }
+
+              if (!stockMovementsTable.sellingPrice) {
+                console.log('🔄 Migrating: Adding sellingPrice column...');
+                await queryInterface.addColumn('stock_movements', 'sellingPrice', {
+                  type: Sequelize.DECIMAL(10, 2),
+                  allowNull: true
+                });
+                console.log('✅ Migration completed: sellingPrice column added');
+              }
+
+              // Migration 8e: Add unitPrice column if it doesn't exist
+              if (!stockMovementsTable.unitPrice) {
+                console.log('🔄 Migrating: Adding unitPrice column...');
+                await queryInterface.addColumn('stock_movements', 'unitPrice', {
+                  type: Sequelize.DECIMAL(10, 2),
+                  allowNull: true
+                });
+                console.log('✅ Migration completed: unitPrice column added');
+              }
+            } catch (migrationError) {
+              console.log('⚠️ Stock movements column migration warning:', migrationError.message);
+            }
+          }
+        } catch (error) {
+          console.log('⚠️ Stock movements migration warning:', error.message);
         }
 
         // Migration 6: Create field_schemas table if it doesn't exist
@@ -517,7 +878,9 @@ async function startServer() {
     const productRoutes = require('./routes/products');
     const productImportExportRoutes = require('./routes/products-import-export');
     const customerRoutes = require('./routes/customers');
+    const supplierRoutes = require('./routes/suppliers');
     const saleRoutes = require('./routes/sales');
+    const purchaseRoutes = require('./routes/purchases');
     const inventoryRoutes = require('./routes/inventory');
     const smsRoutes = require('./routes/sms');
     const syncRoutes = require('./routes/sync');
@@ -532,7 +895,9 @@ async function startServer() {
     app.use('/api/products', authRoutes.authenticateToken, authRoutes.enforceSubscription, productRoutes);
     app.use('/api/products', authRoutes.authenticateToken, authRoutes.enforceSubscription, productImportExportRoutes);
     app.use('/api/customers', authRoutes.authenticateToken, authRoutes.enforceSubscription, customerRoutes);
+    app.use('/api/suppliers', authRoutes.authenticateToken, authRoutes.enforceSubscription, supplierRoutes);
     app.use('/api/sales', authRoutes.authenticateToken, authRoutes.enforceSubscription, saleRoutes);
+    app.use('/api/purchases', authRoutes.authenticateToken, authRoutes.enforceSubscription, purchaseRoutes);
     app.use('/api/inventory', authRoutes.authenticateToken, authRoutes.enforceSubscription, inventoryRoutes);
     app.use('/api/sms', authRoutes.authenticateToken, authRoutes.enforceSubscription, smsRoutes);
     app.use('/api/sync', authRoutes.authenticateToken, authRoutes.enforceSubscription, syncRoutes);

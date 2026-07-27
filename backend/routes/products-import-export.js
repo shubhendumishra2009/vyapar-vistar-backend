@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Product, Business, sequelize } = require('../models');
+const { Product, Business, Stock, StockMovement, sequelize } = require('../models');
 const multer = require('multer');
 const csv = require('csv-parser');
 const xlsx = require('xlsx');
@@ -196,10 +196,54 @@ router.post('/business/:businessId/import', upload.single('file'), async (req, r
       });
     }
     
-    // Bulk insert valid products
+    // Bulk insert valid products (ignore duplicates)
     const results = await Product.bulkCreate(validProducts, {
-      validate: true
+      validate: true,
+      ignoreDuplicates: true
     });
+
+    // Create stock and stock movement records for each product with opening stock
+    for (const product of results) {
+      if (product.stock > 0) {
+        const batchNumber = `BATCH-${Date.now().toString().slice(-6)}-${product.id.slice(0, 6)}`;
+        
+        // Use businessId as shopId if shopId is not set (web app is business-scoped)
+        const stockShopId = product.shopId || product.businessId;
+        
+        // Create stock record
+        await Stock.create({
+          productId: product.id,
+          businessId: product.businessId,
+          shopId: stockShopId,
+          batchNumber: batchNumber,
+          quantity: product.stock,
+          purchasePrice: product.purchasePrice || 0,
+          sellingPrice: product.sellingPrice || 0,
+          purchaseDate: new Date(),
+          notes: 'Opening stock from import',
+          createdBy: product.createdBy
+        });
+
+        // Create stock movement record
+        await StockMovement.create({
+          productId: product.id,
+          businessId: product.businessId,
+          shopId: stockShopId,
+          batchNumber: batchNumber,
+          type: 'OPENING_STOCK',
+          quantity: product.stock,
+          balanceAfter: product.stock,
+          referenceType: 'product_creation',
+          referenceId: product.id,
+          purchasePrice: product.purchasePrice || 0,
+          sellingPrice: product.sellingPrice || 0,
+          notes: `Opening stock from import - Batch: ${batchNumber}`,
+          createdBy: product.createdBy
+        });
+
+        console.log(`📦 Imported stock for ${product.name}: ${product.stock} units (Batch: ${batchNumber})`);
+      }
+    }
     
     // Clean up uploaded file
     fs.unlinkSync(filePath);
