@@ -1,0 +1,222 @@
+[
+  {
+    "name": "Rajesh Kumar Sharma",
+    "phone": "+91 98765 43210",
+    "email": "rajesh.sharma@email.com",
+    "address": "123 Main Street, Connaught Place, New Delhi - 110001",
+    "gstNumber": "07AABCS1234R1Z5",
+    "creditLimit": 50000,
+    "currentBalance": 12500,
+    "isCreditCustomer": true,
+    "isActive": true
+  },
+  {
+    "name": "Priya Patel",
+    "phone": "+91 87654 32109",
+    "email": "priya.patel@email.com",
+    "address": "45 Park Street, Kolkata - 700016",
+    "gstNumber": "19AABCP5678K2Z3",
+    "creditLimit": 30000,
+    "currentBalance": 8500,
+    "isCreditCustomer": true,
+    "isActive": true
+  },
+  {
+    "name": "Amit Singh",
+    "phone": "+91 76543 21098",
+    "email": "amit.singh@email.com",
+    "address": "78 MG Road, Bangalore - 560001",
+    "gstNumber": "29AABCS9012L3Z4",
+    "creditLimit": 25000,
+    "currentBalance": 0,
+    "isCreditCustomer": true,
+    "isActive": true
+  },
+  {
+    "name": "Sneha Reddy",
+    "phone": "+91 65432 10987",
+    "email": "sneha.reddy@email.com",
+    "address": "12 Jubilee Hills, Hyderabad - 500033",
+    "gstNumber": "36AABCR3456M4Z5",
+    "creditLimit": 40000,
+    "currentBalance": 15000,
+    "isCreditCustomer": true,
+    "isActive": true
+  },
+  {
+    "name": "Vikram Joshi",
+    "phone": "+91 54321 09876",
+    "email": "vikram.joshi@email.com",
+    "address": "34 FC Road, Pune - 411005",
+    "gstNumber": "27AABCJ7890N5Z6",
+    "creditLimit": 20000,
+    "currentBalance": 5000,
+    "isCreditCustomer": true,
+    "isActive": true
+  },
+  {
+    "name": "Anita Desai",
+    "phone": "+91 43210 98765",
+    "email": "anita.desai@email.com",
+    "address": "56 Marine Drive, Mumbai - 400020",
+    "gstNumber": "27AABCD1234P6Z7",
+    "creditLimit": 35000,
+    "currentBalance": 0,
+    "isCreditCustomer": false,
+    "isActive": true
+  },
+  {
+    "name": "Karthik Iyer",
+    "phone": "+91 32109 87654",
+    "email": "karthik.iyer@email.com",
+    "address": "89 Anna Salai, Chennai - 600002",
+    "gstNumber": "33AABCK5678Q7Z8",
+    "creditLimit": 45000,
+    "currentBalance": 22000,
+    "isCreditCustomer": true,
+    "isActive": true
+  },
+  {
+    "name": "Meera Nair",
+    "phone": "+91 21098 76543",
+    "email": "meera.nair@email.com",
+    "address": "23 MG Road, Kochi - 682016",
+    "gstNumber": "32AABCM9012R8Z9",
+    "creditLimit": 15000,
+    "currentBalance": 3000,
+    "isCreditCustomer": true,
+    "isActive": true
+  },
+  {
+    "name": "Suresh Gupta",
+    "phone": "+91 10987 65432",
+    "email": "suresh.gupta@email.com",
+    "address": "67 Sector 18, Noida - 201301",
+    "gstNumber": "09AABCS3456S9Z0",
+    "creditLimit": 30000,
+    "currentBalance": 0,
+    "isCreditCustomer": false,
+    "isActive": true
+  },
+  {
+    "name": "Deepika Agarwal",
+    "phone": "+91 99876 54321",
+    "email": "deepika.agarwal@email.com",
+    "address": "45 Civil Lines, Jaipur - 302006",
+    "gstNumber": "08AABCD7890T0Z1",
+    "creditLimit": 25000,
+    "currentBalance": 7500,
+    "isCreditCustomer": true,
+    "isActive": true
+  },
+  {
+    "name": "Rahul Verma",
+    "phone": "+91 88765 43210",
+    "email": "rahul.verma@email.com",
+    "address": "12 Hazratganj, Lucknow - 226001",
+    "gstNumber": "09AABCV1234U1Z2",
+    "creditLimit": 20000,
+    "currentBalance": 0,
+    "isCreditCustomer": false,
+    "isActive": true
+  },
+  {
+    "name": "Pooja Sharma",
+    "phone": "+91 77654 32109",
+    "email": "pooja.sharma@email.com",
+    "address": "34 Mall Road, Shimla - 171001",
+    "gstNumber": "02AABCPS5678V2Z3",
+    "creditLimit": 18000,
+    "currentBalance": 4500,
+    "isCreditCustomer": true,
+    "isActive": true
+  },
+  {
+    "name": "Arun Kumar",
+    "phone": "+91 66543 21098",
+    "email": "arun.kumar@email.com",
+    "address": "56 Gandhi Nagar, Ahmedabad - 380001",
+    "gstNumber": "24AABCK9012W3Z4",
+    "creditLimit": 35000,
+    "currentBalance": 12000,
+    "isCreditCustomer": true,
+    "isActive": true
+  },
+  {
+    "name": "Neha Kapoor",
+    "phone": "+91 55432 10987",
+    "email": "neha.kapoor@email.com",
+    "address": "78 Park Street, Indore - 452001",
+    "gstNumber": "23AABCN3456X4Z5",
+    "creditLimit": 22000,
+    "currentBalance": 0,
+    "isCreditCustomer": false,
+    "isActive": true
+  },
+  {
+    "name": "Sanjay Mehta",
+    "phone": "+91 44321 09876",
+    "email": "sanjay.mehta@email.com",
+    "address": "90 Residency Road, Surat - 395001",
+    "gstNumber": "24AABCS7890Y5Z6",
+    "creditLimit": 40000,
+    "currentBalance": 18000,
+    "isCreditCustomer": true,
+    "isActive": true
+  },
+  {
+    "name": "Ritu Bansal",
+    "phone": "+91 33210 98765",
+    "email": "ritu.bansal@email.com",
+    "address": "23 Gomti Nagar, Lucknow - 226010",
+    "gstNumber": "09AABCR1234Z6Z7",
+    "creditLimit": 28000,
+    "currentBalance": 6000,
+    "isCreditCustomer": true,
+    "isActive": true
+  },
+  {
+    "name": "Manish Tiwari",
+    "phone": "+91 22109 87654",
+    "email": "manish.tiwari@email.com",
+    "address": "45 Kharadi, Pune - 411014",
+    "gstNumber": "27AABCM5678A7Z8",
+    "creditLimit": 32000,
+    "currentBalance": 0,
+    "isCreditCustomer": false,
+    "isActive": true
+  },
+  {
+    "name": "Kavita Singh",
+    "phone": "+91 11098 76543",
+    "email": "kavita.singh@email.com",
+    "address": "67 DLF Phase 2, Gurgaon - 122002",
+    "gstNumber": "06AABCK9012B8Z9",
+    "creditLimit": 38000,
+    "currentBalance": 9500,
+    "isCreditCustomer": true,
+    "isActive": true
+  },
+  {
+    "name": "Ravi Shankar",
+    "phone": "+91 00987 65432",
+    "email": "ravi.shankar@email.com",
+    "address": "89 Salt Lake, Kolkata - 700091",
+    "gstNumber": "19AABCR3456C9Z0",
+    "creditLimit": 25000,
+    "currentBalance": 0,
+    "isCreditCustomer": false,
+    "isActive": true
+  },
+  {
+    "name": "Sunita Rao",
+    "phone": "+91 99876 54322",
+    "email": "sunita.rao@email.com",
+    "address": "12 Banjara Hills, Hyderabad - 500034",
+    "gstNumber": "36AABCS7890D0Z1",
+    "creditLimit": 42000,
+    "currentBalance": 14000,
+    "isCreditCustomer": true,
+    "isActive": true
+  }
+]
