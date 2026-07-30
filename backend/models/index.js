@@ -15,6 +15,8 @@ const FieldSchema = require('./FieldSchema');
 const StockMovement = require('./StockMovement');
 const Stock = require('./Stock');
 const Supplier = require('./Supplier');
+const System = require('./System');
+const PrintSetting = require('./PrintSetting');
 
 // Define associations - clean and conflict-free
 // User-Shop many-to-many relationship
@@ -112,6 +114,16 @@ Business.belongsToMany(Customer, {
 Business.hasMany(Supplier, { foreignKey: 'businessId', as: 'suppliers' });
 Supplier.belongsTo(Business, { foreignKey: 'businessId', as: 'business' });
 
+// System and PrintSetting relationships
+Business.hasMany(System, { foreignKey: 'businessId', as: 'systems' });
+System.belongsTo(Business, { foreignKey: 'businessId', as: 'business' });
+
+System.hasMany(PrintSetting, { foreignKey: 'systemId', as: 'printSettings' });
+PrintSetting.belongsTo(System, { foreignKey: 'systemId', as: 'system' });
+
+Business.hasMany(PrintSetting, { foreignKey: 'businessId', as: 'printSettings' });
+PrintSetting.belongsTo(Business, { foreignKey: 'businessId', as: 'business' });
+
 // FieldSchema - stand-alone configuration table, no direct FK associations needed
 // It is queried by businessType to get the schema for a specific business type.
 
@@ -131,5 +143,7 @@ module.exports = {
   FieldSchema,
   StockMovement,
   Stock,
-  Supplier
+  Supplier,
+  System,
+  PrintSetting
 };

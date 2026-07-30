@@ -884,6 +884,7 @@ async function startServer() {
     const inventoryRoutes = require('./routes/inventory');
     const smsRoutes = require('./routes/sms');
     const syncRoutes = require('./routes/sync');
+    const printSettingsRoutes = require('./routes/print-settings');
 
     // Register routes
     app.use('/api/auth', authRoutes);
@@ -901,6 +902,7 @@ async function startServer() {
     app.use('/api/inventory', authRoutes.authenticateToken, authRoutes.enforceSubscription, inventoryRoutes);
     app.use('/api/sms', authRoutes.authenticateToken, authRoutes.enforceSubscription, smsRoutes);
     app.use('/api/sync', authRoutes.authenticateToken, authRoutes.enforceSubscription, syncRoutes);
+    app.use('/api/print-settings', printSettingsRoutes);
     
     // Health check
     app.get('/api/health', async (req, res) => {
