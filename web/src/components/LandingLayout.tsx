@@ -86,7 +86,9 @@ export default function LandingLayout({ children }: { children: React.ReactNode 
                 </span>
               </button>
               <a
-                href="https://vyaparvistar.a2wares.com/download/windows"
+                href="https://github.com/shubhendumishra2009/vyapar-vistar-backend/releases/latest"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-all duration-200 shadow-lg shadow-emerald-500/20"
               >
                 <Download className="h-4 w-4" />
