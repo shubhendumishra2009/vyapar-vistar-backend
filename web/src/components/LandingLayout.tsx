@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Building2, Menu, X, Sparkles } from 'lucide-react';
+import { Building2, Menu, X, Sparkles, Download } from 'lucide-react';
 
 export default function LandingLayout({ children }: { children: React.ReactNode }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -85,6 +85,13 @@ export default function LandingLayout({ children }: { children: React.ReactNode 
                   <Sparkles className="h-4 w-4" />
                 </span>
               </button>
+              <a
+                href="https://vyaparvistar.a2wares.com/download/windows"
+                className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-all duration-200 shadow-lg shadow-emerald-500/20"
+              >
+                <Download className="h-4 w-4" />
+                Desktop App
+              </a>
             </div>
 
             {/* Mobile Menu Button */}
