@@ -10,6 +10,7 @@ import {
   Users,
   Package,
   ShoppingCart,
+  Truck,
   TrendingUp,
   LogOut,
   Menu,
@@ -21,7 +22,8 @@ import {
   Settings,
   ChevronDown,
   Plus,
-  Lock
+  Lock,
+  Download
 } from 'lucide-react';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -109,7 +111,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Products', href: '/products', icon: Package },
     { name: 'Customers', href: '/customers', icon: Users },
+    { name: 'Suppliers', href: '/suppliers', icon: Building2 },
     { name: 'Sales', href: '/sales', icon: ShoppingCart },
+    { name: 'Purchases', href: '/purchases', icon: Truck },
     { name: 'Inventory', href: '/inventory', icon: Warehouse },
     { name: 'Reports', href: '/reports', icon: TrendingUp },
     { name: 'Settings', href: '/settings', icon: Settings },
@@ -189,8 +193,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             })}
           </nav>
 
-          <div className="p-4 border-t border-white/5">
-            <div className="flex items-center mb-4 px-2">
+          <div className="p-4 border-t border-white/5 space-y-3">
+            <div className="flex items-center px-2">
               <div className="w-10 h-10 gradient-primary rounded-full flex items-center justify-center text-white font-bold shadow-lg shadow-emerald-500/20">
                 {user?.name?.charAt(0)?.toUpperCase() || 'U'}
               </div>
@@ -199,6 +203,20 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <p className="text-xs text-slate-500">{user?.type || 'Administrator'}</p>
               </div>
             </div>
+            
+            <div className="px-2">
+              <p className="text-xs font-medium text-slate-400 mb-2">Download our desktop app for more flexibility</p>
+              <a
+                href="https://github.com/shubhendumishra2009/vyapar-vistar-backend/releases/latest"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center w-full px-4 py-2.5 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-all duration-200 shadow-lg shadow-emerald-500/20"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Desktop App
+              </a>
+            </div>
+            
             <button
               onClick={handleLogout}
               className="flex items-center w-full px-4 py-2.5 text-sm font-medium text-red-400 rounded-xl hover:bg-red-500/10 transition-all duration-200 group"
