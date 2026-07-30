@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { System, PrintSetting, Business } = require('../models');
-const { authenticateToken } = require('../middleware/auth');
+const { authenticateToken } = require('./auth');
 
 // All routes require authentication
 router.use(authenticateToken);
