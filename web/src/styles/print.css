@@ -1,0 +1,437 @@
+/* ============================================
+   PRINT STYLES - Multiple Paper Size Support
+   ============================================ */
+
+/* Base print styles - hide everything by default */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  
+  #invoice-modal, #invoice-modal * {
+    visibility: visible;
+  }
+  
+  #invoice-modal {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .no-print {
+    display: none !important;
+  }
+}
+
+/* ============================================
+   A4 SIZE - Full Invoice (210mm x 297mm)
+   ============================================ */
+@media print and (size: A4) {
+  @page {
+    size: A4;
+    margin: 15mm;
+  }
+  
+  #invoice-modal {
+    width: 100%;
+    max-width: 100%;
+    padding: 20mm;
+    font-size: 11pt;
+  }
+  
+  #invoice-modal .invoice-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20mm;
+  }
+  
+  #invoice-modal .company-info {
+    flex: 1;
+  }
+  
+  #invoice-modal .invoice-title {
+    text-align: right;
+  }
+  
+  #invoice-modal .invoice-title h2 {
+    font-size: 24pt;
+    margin-bottom: 5mm;
+  }
+  
+  #invoice-modal table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10mm 0;
+  }
+  
+  #invoice-modal table th,
+  #invoice-modal table td {
+    padding: 3mm;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+  }
+  
+  #invoice-modal table th {
+    background-color: #f5f5f5;
+    font-weight: bold;
+  }
+  
+  #invoice-modal .totals-section {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 10mm;
+  }
+  
+  #invoice-modal .totals-box {
+    width: 60mm;
+  }
+  
+  #invoice-modal .footer {
+    margin-top: 20mm;
+    padding-top: 10mm;
+    border-top: 1px solid #ddd;
+    text-align: center;
+  }
+}
+
+/* ============================================
+   58mm THERMAL RECEIPT - Compact (58mm x 100mm)
+   ============================================ */
+@media print and (size: 58mm) {
+  @page {
+    size: 58mm auto;
+    margin: 0;
+  }
+  
+  #invoice-modal {
+    width: 58mm;
+    max-width: 58mm;
+    padding: 2mm;
+    font-size: 9pt;
+    font-family: 'Courier New', monospace;
+  }
+  
+  #invoice-modal .invoice-header {
+    text-align: center;
+    margin-bottom: 3mm;
+  }
+  
+  #invoice-modal .company-info h1 {
+    font-size: 12pt;
+    font-weight: bold;
+    margin-bottom: 1mm;
+  }
+  
+  #invoice-modal .company-info p {
+    font-size: 8pt;
+    margin: 0;
+  }
+  
+  #invoice-modal .invoice-title {
+    margin-top: 3mm;
+    text-align: center;
+  }
+  
+  #invoice-modal .invoice-title h2 {
+    font-size: 11pt;
+    font-weight: bold;
+    margin: 1mm 0;
+  }
+  
+  #invoice-modal .invoice-title p {
+    font-size: 8pt;
+    margin: 0;
+  }
+  
+  #invoice-modal .customer-info {
+    margin: 3mm 0;
+    padding: 2mm;
+    border-top: 1px dashed #000;
+    border-bottom: 1px dashed #000;
+    font-size: 8pt;
+  }
+  
+  #invoice-modal table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 3mm 0;
+    font-size: 8pt;
+  }
+  
+  #invoice-modal table th,
+  #invoice-modal table td {
+    padding: 1mm;
+    text-align: left;
+    border-bottom: 1px dotted #ccc;
+  }
+  
+  #invoice-modal table th {
+    font-weight: bold;
+    font-size: 8pt;
+  }
+  
+  #invoice-modal table th:nth-child(1),
+  #invoice-modal table td:nth-child(1) {
+    width: 40%;
+  }
+  
+  #invoice-modal table th:nth-child(2),
+  #invoice-modal table td:nth-child(2) {
+    width: 15%;
+    text-align: center;
+  }
+  
+  #invoice-modal table th:nth-child(3),
+  #invoice-modal table td:nth-child(3) {
+    width: 20%;
+    text-align: right;
+  }
+  
+  #invoice-modal table th:nth-child(4),
+  #invoice-modal table td:nth-child(4) {
+    width: 25%;
+    text-align: right;
+  }
+  
+  #invoice-modal .totals-section {
+    margin: 3mm 0;
+    padding: 2mm 0;
+    border-top: 1px dashed #000;
+  }
+  
+  #invoice-modal .totals-box {
+    width: 100%;
+  }
+  
+  #invoice-modal .totals-box .total-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 8pt;
+    margin: 1mm 0;
+  }
+  
+  #invoice-modal .totals-box .grand-total {
+    font-weight: bold;
+    font-size: 10pt;
+    margin-top: 2mm;
+    padding-top: 2mm;
+    border-top: 1px solid #000;
+  }
+  
+  #invoice-modal .footer {
+    margin-top: 3mm;
+    padding-top: 2mm;
+    border-top: 1px dashed #000;
+    text-align: center;
+    font-size: 8pt;
+  }
+}
+
+/* ============================================
+   80mm THERMAL RECEIPT - Medium (80mm x 100mm)
+   ============================================ */
+@media print and (size: 80mm) {
+  @page {
+    size: 80mm auto;
+    margin: 0;
+  }
+  
+  #invoice-modal {
+    width: 80mm;
+    max-width: 80mm;
+    padding: 3mm;
+    font-size: 10pt;
+    font-family: 'Courier New', monospace;
+  }
+  
+  #invoice-modal .invoice-header {
+    text-align: center;
+    margin-bottom: 4mm;
+  }
+  
+  #invoice-modal .company-info h1 {
+    font-size: 14pt;
+    font-weight: bold;
+    margin-bottom: 1mm;
+  }
+  
+  #invoice-modal .company-info p {
+    font-size: 9pt;
+    margin: 0;
+  }
+  
+  #invoice-modal .invoice-title {
+    margin-top: 4mm;
+    text-align: center;
+  }
+  
+  #invoice-modal .invoice-title h2 {
+    font-size: 13pt;
+    font-weight: bold;
+    margin: 1mm 0;
+  }
+  
+  #invoice-modal .invoice-title p {
+    font-size: 9pt;
+    margin: 0;
+  }
+  
+  #invoice-modal .customer-info {
+    margin: 4mm 0;
+    padding: 2mm;
+    border-top: 1px dashed #000;
+    border-bottom: 1px dashed #000;
+    font-size: 9pt;
+  }
+  
+  #invoice-modal table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 4mm 0;
+    font-size: 9pt;
+  }
+  
+  #invoice-modal table th,
+  #invoice-modal table td {
+    padding: 2mm;
+    text-align: left;
+    border-bottom: 1px dotted #ccc;
+  }
+  
+  #invoice-modal table th {
+    font-weight: bold;
+    font-size: 9pt;
+  }
+  
+  #invoice-modal table th:nth-child(1),
+  #invoice-modal table td:nth-child(1) {
+    width: 45%;
+  }
+  
+  #invoice-modal table th:nth-child(2),
+  #invoice-modal table td:nth-child(2) {
+    width: 15%;
+    text-align: center;
+  }
+  
+  #invoice-modal table th:nth-child(3),
+  #invoice-modal table td:nth-child(3) {
+    width: 20%;
+    text-align: right;
+  }
+  
+  #invoice-modal table th:nth-child(4),
+  #invoice-modal table td:nth-child(4) {
+    width: 20%;
+    text-align: right;
+  }
+  
+  #invoice-modal .totals-section {
+    margin: 4mm 0;
+    padding: 2mm 0;
+    border-top: 1px dashed #000;
+  }
+  
+  #invoice-modal .totals-box {
+    width: 100%;
+  }
+  
+  #invoice-modal .totals-box .total-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 9pt;
+    margin: 1mm 0;
+  }
+  
+  #invoice-modal .totals-box .grand-total {
+    font-weight: bold;
+    font-size: 11pt;
+    margin-top: 2mm;
+    padding-top: 2mm;
+    border-top: 1px solid #000;
+  }
+  
+  #invoice-modal .footer {
+    margin-top: 4mm;
+    padding-top: 2mm;
+    border-top: 1px dashed #000;
+    text-align: center;
+    font-size: 9pt;
+  }
+}
+
+/* ============================================
+   A5 SIZE - Small Invoice (148mm x 210mm)
+   ============================================ */
+@media print and (size: A5) {
+  @page {
+    size: A5;
+    margin: 10mm;
+  }
+  
+  #invoice-modal {
+    width: 100%;
+    max-width: 100%;
+    padding: 10mm;
+    font-size: 10pt;
+  }
+  
+  #invoice-modal .invoice-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10mm;
+  }
+  
+  #invoice-modal .company-info {
+    flex: 1;
+  }
+  
+  #invoice-modal .invoice-title {
+    text-align: right;
+  }
+  
+  #invoice-modal .invoice-title h2 {
+    font-size: 20pt;
+    margin-bottom: 3mm;
+  }
+  
+  #invoice-modal table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 5mm 0;
+  }
+  
+  #invoice-modal table th,
+  #invoice-modal table td {
+    padding: 2mm;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+  }
+  
+  #invoice-modal table th {
+    background-color: #f5f5f5;
+    font-weight: bold;
+  }
+  
+  #invoice-modal .totals-section {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 5mm;
+  }
+  
+  #invoice-modal .totals-box {
+    width: 50mm;
+  }
+  
+  #invoice-modal .footer {
+    margin-top: 10mm;
+    padding-top: 5mm;
+    border-top: 1px solid #ddd;
+    text-align: center;
+  }
+}
