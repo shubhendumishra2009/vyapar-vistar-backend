@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Building2, Menu, X, Sparkles, Download } from 'lucide-react';
+import { Menu, X, Sparkles, Download } from 'lucide-react';
 
 export default function LandingLayout({ children }: { children: React.ReactNode }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -35,14 +35,13 @@ export default function LandingLayout({ children }: { children: React.ReactNode 
           <div className="flex items-center justify-between h-20">
             {/* Logo */}
             <Link to="/" className="flex items-center space-x-3 group">
-              <div className="relative">
-                <div className="w-11 h-11 gradient-primary rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20 group-hover:shadow-emerald-500/40 transition-all duration-300">
-                  <Building2 className="h-6 w-6 text-white" />
-                </div>
-                <div className="absolute -inset-1 gradient-primary rounded-xl opacity-20 blur-sm group-hover:opacity-30 transition-opacity"></div>
-              </div>
+              <img
+                src="/logo.png"
+                alt="Vyapar Vistar"
+                className="w-11 h-11 object-contain rounded-xl"
+              />
               <div>
-                <span className="text-xl font-bold text-white tracking-tight">VyaparVistar</span>
+                <span className="text-xl font-bold text-white tracking-tight">Vyapar Vistar</span>
                 <span className="block text-[10px] uppercase tracking-[0.2em] text-emerald-400/70 font-medium">Business ERP</span>
               </div>
             </Link>
@@ -155,11 +154,13 @@ export default function LandingLayout({ children }: { children: React.ReactNode 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
             <div className="col-span-1 md:col-span-2">
               <div className="flex items-center space-x-3 mb-5">
-                <div className="w-10 h-10 gradient-primary rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                  <Building2 className="h-5 w-5 text-white" />
-                </div>
+                <img
+                  src="/logo.png"
+                  alt="Vyapar Vistar"
+                  className="w-10 h-10 object-contain rounded-xl"
+                />
                 <div>
-                  <span className="text-lg font-bold text-white">VyaparVistar</span>
+                  <span className="text-lg font-bold text-white">Vyapar Vistar</span>
                   <span className="block text-[10px] uppercase tracking-[0.2em] text-emerald-400/70 font-medium">Business ERP</span>
                 </div>
               </div>
@@ -220,7 +221,7 @@ export default function LandingLayout({ children }: { children: React.ReactNode 
           </div>
           <div className="border-t border-white/5 mt-12 pt-8 text-center">
             <p className="text-slate-500 text-sm">
-              © 2024 VyaparVistar. All rights reserved. Crafted with precision for modern retail.
+              © 2024 Vyapar Vistar. All rights reserved. Crafted with precision for modern retail.
             </p>
           </div>
         </div>

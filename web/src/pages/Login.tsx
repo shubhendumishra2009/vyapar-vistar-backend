@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { api } from '../services/api';
-import { Lock, User, Building2, ArrowLeft, Eye, EyeOff, Sparkles } from 'lucide-react';
+import { Lock, User, ArrowLeft, Eye, EyeOff, Sparkles } from 'lucide-react';
 
 export default function Login() {
   const [username, setUsername] = useState('');
@@ -74,12 +74,13 @@ export default function Login() {
         {/* Logo and Branding */}
         <div className="text-center mb-10">
           <Link to="/" className="inline-flex items-center justify-center relative">
-            <div className="w-20 h-20 gradient-primary rounded-2xl flex items-center justify-center shadow-xl shadow-emerald-500/20 mb-5">
-              <Building2 className="h-10 w-10 text-white" />
-            </div>
-            <div className="absolute -inset-1 gradient-primary rounded-2xl opacity-20 blur-md"></div>
+            <img
+              src="/logo.png"
+              alt="Vyapar Vistar"
+              className="w-20 h-20 object-contain rounded-2xl mb-5"
+            />
           </Link>
-          <h1 className="text-3xl font-bold text-white">VyaparVistar</h1>
+          <h1 className="text-3xl font-bold text-white">Vyapar Vistar</h1>
           <p className="text-slate-400 mt-2 text-sm">Enterprise Retail Management System</p>
         </div>
 
@@ -185,7 +186,7 @@ export default function Login() {
 
         {/* Footer */}
         <div className="text-center mt-8 text-sm text-slate-600">
-          <p>© 2024 VyaparVistar. All rights reserved.</p>
+          <p>© 2024 Vyapar Vistar. All rights reserved.</p>
         </div>
       </div>
     </div>

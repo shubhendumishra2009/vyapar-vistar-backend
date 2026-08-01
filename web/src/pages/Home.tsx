@@ -218,14 +218,14 @@ export default function Home() {
 
               <div className="space-y-6">
                 <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-white/5 border border-white/10">
-                  <span className="text-sm font-medium text-slate-300">About VyaparVistar</span>
+                  <span className="text-sm font-medium text-slate-300">About Vyapar Vistar</span>
                 </div>
                 <h2 className="text-4xl md:text-5xl font-bold text-white">
                   Empowering Retailers with{' '}
                   <span className="gradient-text">Smart Technology</span>
                 </h2>
                 <p className="text-lg text-slate-400 leading-relaxed">
-                  VyaparVistar is a comprehensive ERP solution built specifically for Indian retailers. 
+                  Vyapar Vistar is a comprehensive ERP solution built specifically for Indian retailers. 
                   We understand the unique challenges of the retail industry and provide tools that make 
                   business management effortless.
                 </p>
@@ -573,7 +573,7 @@ export default function Home() {
 
                 <div className="space-y-4 pt-4">
                   {[
-                    { label: 'Email', value: 'support@vyaparvistar.com', icon: MessageSquare },
+                    { label: 'Email', value: 'support@vyapar-vistar.com', icon: MessageSquare },
                     { label: 'Phone', value: '+91 98765 43210', icon: HeadphonesIcon },
                     { label: 'Office', value: 'Mumbai, Maharashtra, India', icon: Building2 },
                   ].map((item) => (
@@ -659,7 +659,7 @@ export default function Home() {
             <span className="text-emerald-300">Retail Business?</span>
           </h2>
           <p className="text-xl text-emerald-100/70 mb-10 max-w-2xl mx-auto">
-            Join thousands of successful retailers who trust VyaparVistar for their 
+            Join thousands of successful retailers who trust Vyapar Vistar for their
             day-to-day business management needs
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">

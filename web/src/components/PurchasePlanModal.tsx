@@ -40,7 +40,7 @@ export default function PurchasePlanModal({ open, onClose, reason = 'trial_expir
 
   const subtext =
     reason === 'trial_expired'
-      ? 'Thank you for trying VyaparVistar. To continue managing your business and unlock more features, please purchase a plan.'
+      ? 'Thank you for trying Vyapar Vistar. To continue managing your business and unlock more features, please purchase a plan.'
       : 'Your current plan allows only one business. Purchase a plan to add more business units.';
 
   return (
@@ -121,7 +121,7 @@ export default function PurchasePlanModal({ open, onClose, reason = 'trial_expir
 
           <p className="text-center text-xs text-slate-500 mt-6">
             Need a custom plan? Contact us at{' '}
-            <span className="text-emerald-400">support@vyaparvistar.com</span>
+            <span className="text-emerald-400">support@vyapar-vistar.com</span>
           </p>
         </div>
       </div>

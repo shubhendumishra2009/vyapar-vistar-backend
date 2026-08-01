@@ -853,7 +853,7 @@ export default function Purchases() {
             <div className="p-8">
               <div className="flex justify-between items-start mb-8">
                 <div>
-                  <h1 className="text-3xl font-bold text-indigo-600 mb-2">VyaparVistar</h1>
+                  <h1 className="text-3xl font-bold text-indigo-600 mb-2">Vyapar Vistar</h1>
                   <p className="text-sm text-slate-600">Purchase Order</p>
                 </div>
                 <div className="text-right">

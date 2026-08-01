@@ -10,8 +10,8 @@ export default function SubscriptionLockout({ reason = 'trial_expired', onPurcha
   const title = reason === 'subscription_expired' ? 'Subscription Expired' : 'Free Trial Ended';
   const message =
     reason === 'subscription_expired'
-      ? 'Your subscription has expired. Please renew your plan to continue using VyaparVistar.'
-      : 'Your free trial has ended. Please purchase a plan to continue using VyaparVistar.';
+      ? 'Your subscription has expired. Please renew your plan to continue using Vyapar Vistar.'
+      : 'Your free trial has ended. Please purchase a plan to continue using Vyapar Vistar.';
 
   return (
     <div className="min-h-screen bg-deep-950 flex items-center justify-center p-4 relative overflow-hidden">
@@ -57,7 +57,7 @@ export default function SubscriptionLockout({ reason = 'trial_expired', onPurcha
         </div>
 
         <div className="text-center mt-8 text-sm text-slate-600">
-          <p>© 2024 VyaparVistar. All rights reserved.</p>
+          <p>© 2024 Vyapar Vistar. All rights reserved.</p>
         </div>
       </div>
 

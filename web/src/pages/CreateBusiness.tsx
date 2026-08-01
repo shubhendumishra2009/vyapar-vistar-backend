@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Building2, ArrowLeft, Store, Tag, FileText, Sparkles, LogOut } from 'lucide-react';
+import { ArrowLeft, Store, Tag, FileText, Sparkles, LogOut } from 'lucide-react';
 import { api } from '../services/api';
 import { useAuthStore } from '../store/authStore';
 
@@ -73,10 +73,11 @@ export default function CreateBusiness() {
           {/* Logo and Branding */}
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center relative mb-4">
-              <div className="w-16 h-16 gradient-primary rounded-2xl flex items-center justify-center shadow-xl shadow-emerald-500/20">
-                <Building2 className="h-8 w-8 text-white" />
-              </div>
-              <div className="absolute -inset-1 gradient-primary rounded-2xl opacity-20 blur-md"></div>
+              <img
+                src="/logo.png"
+                alt="Vyapar Vistar"
+                className="w-16 h-16 object-contain rounded-2xl"
+              />
             </div>
             <h1 className="text-2xl font-bold text-white">Create Your Business</h1>
             <p className="text-slate-400 mt-1 text-sm">Start your 7-day free trial with Starter plan</p>
@@ -193,7 +194,7 @@ export default function CreateBusiness() {
 
         {/* Footer */}
         <div className="text-center mt-8 text-sm text-slate-600">
-          <p>© 2024 VyaparVistar. All rights reserved.</p>
+          <p>© 2024 Vyapar Vistar. All rights reserved.</p>
         </div>
       </div>
     </div>

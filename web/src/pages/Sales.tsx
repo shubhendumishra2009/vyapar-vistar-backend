@@ -361,7 +361,7 @@ export default function Sales() {
           </div>
           <div id="invoice-modal" className={`p-8 ${paperSize === '58mm' ? 'thermal-58mm' : paperSize === '80mm' ? 'thermal-80mm' : ''}`}>
             <div className="flex justify-between items-start mb-8">
-              <div><h1 className="text-3xl font-bold text-indigo-600 mb-2">VyaparVistar</h1><p className="text-sm text-slate-600">Your Business Name</p></div>
+              <div><h1 className="text-3xl font-bold text-indigo-600 mb-2">Vyapar Vistar</h1><p className="text-sm text-slate-600">Your Business Name</p></div>
               <div className="text-right"><h2 className="text-2xl font-bold text-slate-900 mb-2">INVOICE</h2><p className="text-sm text-slate-600">Invoice #: {selectedSale.invoiceNumber}</p><p className="text-sm text-slate-600">Date: {selectedSale.date}</p></div>
             </div>
             <div className="mb-8 p-4 bg-slate-50 rounded-lg"><h3 className="text-sm font-semibold text-slate-700 mb-2">Bill To:</h3><p className="text-sm font-medium text-slate-900">{selectedSale.customerName}</p>{selectedSale.customerPhone && <p className="text-sm text-slate-600">Phone: {selectedSale.customerPhone}</p>}</div>

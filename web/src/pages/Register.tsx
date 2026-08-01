@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Building2, ArrowLeft, Sparkles, Eye, EyeOff, User, Mail, Phone, Lock } from 'lucide-react';
+import { ArrowLeft, Sparkles, Eye, EyeOff, User, Mail, Phone, Lock } from 'lucide-react';
 import { api } from '../services/api';
 import { useAuthStore } from '../store/authStore';
 
@@ -80,13 +80,14 @@ export default function Register() {
           {/* Logo and Branding */}
           <div className="text-center mb-8">
             <Link to="/" className="inline-flex items-center justify-center relative">
-              <div className="w-16 h-16 gradient-primary rounded-2xl flex items-center justify-center shadow-xl shadow-emerald-500/20 mb-4">
-                <Building2 className="h-8 w-8 text-white" />
-              </div>
-              <div className="absolute -inset-1 gradient-primary rounded-2xl opacity-20 blur-md"></div>
+              <img
+                src="/logo.png"
+                alt="Vyapar Vistar"
+                className="w-16 h-16 object-contain rounded-2xl mb-4"
+              />
             </Link>
             <h1 className="text-2xl font-bold text-white">Create Account</h1>
-            <p className="text-slate-400 mt-1 text-sm">Join VyaparVistar today</p>
+            <p className="text-slate-400 mt-1 text-sm">Join Vyapar Vistar today</p>
           </div>
 
           {error && (
@@ -251,7 +252,7 @@ export default function Register() {
 
         {/* Footer */}
         <div className="text-center mt-8 text-sm text-slate-600">
-          <p>© 2024 VyaparVistar. All rights reserved.</p>
+          <p>© 2024 Vyapar Vistar. All rights reserved.</p>
         </div>
       </div>
     </div>
